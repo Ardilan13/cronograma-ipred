@@ -313,11 +313,22 @@ function crearMultiSelectGrupos(datos) {
     contenedor.appendChild(optionDiv);
   });
 
-  // Mostrar/Ocultar dropdown
-  selectedBox.onclick = () => {
+  // Mostrar/ocultar dropdown al hacer clic en el selectedBox
+  selectedBox.onclick = (e) => {
+    e.stopPropagation(); // Evita que se dispare el evento global
     dropdown.classList.toggle("hidden");
     searchBox.focus();
   };
+
+  // Ocultar el dropdown si se hace clic fuera
+  document.addEventListener("click", (e) => {
+    if (
+      !dropdown.contains(e.target) && // No está haciendo clic dentro del dropdown
+      !selectedBox.contains(e.target) // No está haciendo clic en el botón que abre
+    ) {
+      dropdown.classList.add("hidden");
+    }
+  });
 
   // Filtrar grupos mientras escribes
   searchBox.addEventListener("input", () => {

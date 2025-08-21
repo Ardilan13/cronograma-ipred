@@ -34,19 +34,6 @@ const isNumStr = (v) => typeof v === "string" && /^[0-9]+$/.test(v);
 
 /* --------------------------- Navegador compartido -------------------------- */
 let browser; // singleton
-async function getBrowser() {
-  if (browser && browser.isConnected()) return browser;
-  browser = await puppeteer.launch({
-    headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
-    ],
-  });
-  return browser;
-}
 
 async function getBrowser() {
   if (browser && browser.isConnected()) return browser;
