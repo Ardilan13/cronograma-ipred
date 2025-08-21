@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cronograma Académico</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>📅 Cronograma Académico</h1>
+
+      <!-- <form id="filtros" class="filters">
+        <div class="filter-group">
+          <label for="programa">Programa:</label>
+          <select name="programa" id="programa">
+            <option value="">Seleccionar programa</option>
+            <option value="82">Programa 82</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="sede">Sede:</label>
+          <select name="sede" id="sede">
+            <option value="">Seleccionar sede</option>
+            <option value="10">Sede 10</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="jornada">Jornada:</label>
+          <select name="jornada" id="jornada">
+            <option value="">Seleccionar jornada</option>
+            <option value="2">Nocturna</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="grupos">Grupo:</label>
+          <select name="grupos" id="grupos">
+            <option value="">Seleccionar grupo</option>
+          </select>
+        </div>
+
+        <button type="button" onclick="cargarCronogramaXHR()">
+          🔍 Cargar Cronograma
+        </button>
+      </form> -->
+
+      <div class="filter-group">
+        <label for="grupos">Grupo:</label>
+        <select name="grupos" id="grupos">
+          <option value="">Seleccionar grupo</option>
+        </select>
+      </div>
+
+      <div class="week-navigation" id="weekNavigation" style="display: none">
+        <button type="button" class="week-nav-btn" onclick="cambiarSemana(-1)">
+          ⬅️ Semana Anterior
+        </button>
+        <div class="week-info" id="weekInfo">
+          <!-- Información de la semana se mostrará aquí -->
+        </div>
+        <button type="button" class="week-nav-btn" onclick="cambiarSemana(1)">
+          Semana Siguiente ➡️
+        </button>
+      </div>
+
+      <div id="resultado">
+        <div class="no-data">
+          Seleccione los filtros y presione "Cargar Cronograma" para ver los
+          datos
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
