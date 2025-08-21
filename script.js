@@ -87,7 +87,7 @@ function fechaEstaEnSemana(fechaStr, semanaOffset) {
   return fecha >= lunes && fecha <= domingo;
 }
 
-function filtrarPorGrupoYSemana(datos, grupoSeleccionado, semanaOffset) {
+function filtrarPorGrupoYSemana(datos, gruposSeleccionados, semanaOffset) {
   if (!datos || datos.length === 0) return datos;
 
   // Si la API devuelve un array, usamos el primer elemento
@@ -104,9 +104,10 @@ function filtrarPorGrupoYSemana(datos, grupoSeleccionado, semanaOffset) {
       const cursosFiltrados = cursos
         .map((curso) => {
           const actividadesFiltradas = curso.actividades.filter((actividad) => {
-            // Filtrar por grupo
+            // Filtrar por grupo (si hay selección, aplica; si no, muestra todos)
             const pasaFiltroGrupo =
-              !grupoSeleccionado || actividad.grupo === grupoSeleccionado;
+              gruposSeleccionados.length === 0 ||
+              gruposSeleccionados.includes(actividad.grupo);
 
             // Filtrar por semana
             const fechaSolo = actividad.fecha_inicio.split(" ")[0];
@@ -171,27 +172,30 @@ function crearTablaCalendario(datos) {
   }
 
   let html = `
-          <div class="calendar-container">
-              <table class="calendar-table">
-                  <thead>
-                      <tr>
-                          <th>📅 Fecha</th>
-                          <th>📚 Actividades</th>
-                      </tr>
-                  </thead>
-                  <tbody>
-        `;
+    <div class="calendar-container">
+      <table class="calendar-table">
+        <thead>
+          <tr>
+            <th>📅 Fecha</th>
+            <th>📚 Actividades</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
 
   fechasOrdenadas.forEach((fecha) => {
-    const actividades = actividadesPorFecha[fecha];
+    // 🔹 Ordenamos las actividades por hora de inicio
+    const actividades = actividadesPorFecha[fecha].sort((a, b) => {
+      return new Date(a.fecha_inicio) - new Date(b.fecha_inicio);
+    });
 
     html += `
-            <tr>
-                <td class="date-cell">
-                    <strong>${formatearFecha(fecha + " 12:00:00")}</strong>
-                </td>
-                <td class="activity-cell">
-          `;
+      <tr>
+        <td class="date-cell">
+          <strong>${formatearFecha(fecha + " 12:00:00")}</strong>
+        </td>
+        <td class="activity-cell">
+    `;
 
     actividades.forEach((actividad) => {
       const horaInicio = formatearHora(actividad.fecha_inicio);
@@ -202,78 +206,162 @@ function crearTablaCalendario(datos) {
           : "Remoto";
 
       html += `
-              <div class="activity-item">
-                  <div class="activity-type">
-                      <span class="group-badge">${actividad.grupo}</span>
-                      <strong>${actividad.nombre_asignatura}</strong>
-                  </div>
-                  <div class="activity-details">
-                      <div>${actividad.nombre_tipo_actividad}</div>
-                      <div>👨‍🏫 ${actividad.nombre_profesor}</div>
-                      <div class="activity-time">🕐 ${horaInicio} - ${horaFin}</div>
-                      <div class="activity-location">📍 ${ubicacion}</div>
-                  </div>
-              </div>
-            `;
+        <div class="activity-item">
+          <div class="activity-type">
+            <span class="group-badge" 
+              style="background-color:${getColorForGroup(actividad.grupo)}">
+              ${actividad.grupo}
+            </span>
+            <strong>${actividad.nombre_asignatura}</strong>
+          </div>
+          <div class="activity-details">
+            <div>${actividad.nombre_tipo_actividad}</div>
+            <div>👨‍🏫 ${actividad.nombre_profesor}</div>
+            <div class="activity-time">🕐 ${horaInicio} - ${horaFin}</div>
+            <div class="activity-location">📍 ${ubicacion}</div>
+          </div>
+        </div>
+      `;
     });
 
     html += `
-                </td>
-            </tr>
-          `;
+        </td>
+      </tr>
+    `;
   });
 
   html += `
-                  </tbody>
-              </table>
-          </div>
-        `;
+        </tbody>
+      </table>
+    </div>
+  `;
 
   return html;
 }
 
-function crearSelectGrupos(datos) {
-  const grupos = document.getElementById("grupos");
-  const gruposSet = new Set();
+// Asigna un color único a cada grupo
+const coloresGrupos = {};
+const paletaColores = [
+  "#1E90FF",
+  "#FF6347",
+  "#32CD32",
+  "#FF69B4",
+  "#FFA500",
+  "#8A2BE2",
+  "#00CED1",
+  "#FF4500",
+  "#2E8B57",
+  "#FF1493",
+  "#6495ED",
+  "#FFD700",
+  "#DC143C",
+  "#20B2AA",
+  "#9370DB",
+];
 
-  // Si la API devuelve un array, usamos el primer elemento para extraer grupos
-  const datosNormalizados = Array.isArray(datos) ? datos[2] : datos;
+function getColorForGroup(grupo) {
+  // Si ya asignamos un color a este grupo, usamos el mismo
+  if (coloresGrupos[grupo]) return coloresGrupos[grupo];
 
-  // Extraer todos los grupos únicos de las actividades
-  datosNormalizados.forEach((grupo) => {
-    gruposSet.add(grupo);
-  });
+  // Si no, elegimos un color de la paleta
+  const index = Object.keys(coloresGrupos).length % paletaColores.length;
+  const color = paletaColores[index];
 
-  // Limpiar opciones anteriores excepto la primera
-  grupos.innerHTML = '<option value="">Todos los grupos</option>';
-
-  // Crear opciones de grupos ordenadas
-  const gruposArray = Array.from(gruposSet).sort();
-  gruposArray.forEach((grupo) => {
-    const option = document.createElement("option");
-    option.value = grupo;
-    option.textContent = grupo;
-
-    // Seleccionar EN1 por defecto si existe
-    if (grupo === "EN1") {
-      option.selected = true;
-    }
-
-    grupos.appendChild(option);
-  });
-
-  // Añadir event listener para filtrar cuando cambie la selección
-  grupos.removeEventListener("change", aplicarFiltros); // Remover listener previo
-  grupos.addEventListener("change", aplicarFiltros);
+  coloresGrupos[grupo] = color;
+  return color;
 }
 
+function crearMultiSelectGrupos(datos) {
+  const contenedor = document.getElementById("grupos-container");
+  contenedor.innerHTML = "";
+  const selectedBox = document.getElementById("selected");
+  const dropdown = document.getElementById("dropdown");
+  const searchBox = document.getElementById("searchBox");
+
+  // Obtener grupos únicos
+  const datosNormalizados = Array.isArray(datos) ? datos[2] : datos;
+  const gruposUnicos = [...new Set(datosNormalizados)].sort();
+
+  const gruposSeleccionadosPorDefecto = ["EN1", "DN1"];
+  const seleccionadosInicialmente = [];
+
+  // Crear checkboxes dinámicamente
+  gruposUnicos.forEach((grupo) => {
+    const optionDiv = document.createElement("div");
+    optionDiv.classList.add("grupo-option");
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = grupo;
+    checkbox.id = `grupo-${grupo}`;
+
+    // Seleccionar EN1 y DN1 por defecto si existen
+    if (gruposSeleccionadosPorDefecto.includes(grupo)) {
+      checkbox.checked = true;
+      seleccionadosInicialmente.push(grupo);
+    }
+
+    const label = document.createElement("label");
+    label.setAttribute("for", `grupo-${grupo}`);
+    label.textContent = grupo;
+
+    optionDiv.appendChild(checkbox);
+    optionDiv.appendChild(label);
+    contenedor.appendChild(optionDiv);
+  });
+
+  // Mostrar/Ocultar dropdown
+  selectedBox.onclick = () => {
+    dropdown.classList.toggle("hidden");
+    searchBox.focus();
+  };
+
+  // Filtrar grupos mientras escribes
+  searchBox.addEventListener("input", () => {
+    const filtro = searchBox.value.toLowerCase();
+    document.querySelectorAll(".grupo-option").forEach((option) => {
+      const texto = option.textContent.toLowerCase();
+      option.style.display = texto.includes(filtro) ? "flex" : "none";
+    });
+  });
+
+  // Actualizar etiqueta y aplicar filtros cuando se seleccionan grupos
+  contenedor.addEventListener("change", () => {
+    const seleccionados = Array.from(
+      contenedor.querySelectorAll("input[type='checkbox']:checked")
+    ).map((input) => input.value);
+
+    selectedBox.textContent =
+      seleccionados.length > 0
+        ? seleccionados.join(", ")
+        : "Seleccionar grupo(s)";
+
+    aplicarFiltros();
+  });
+
+  // Mostrar seleccionados por defecto si hay
+  if (seleccionadosInicialmente.length > 0) {
+    selectedBox.textContent = seleccionadosInicialmente.join(", ");
+  } else {
+    selectedBox.textContent = "Seleccionar grupo(s)";
+  }
+
+  // Aplicar filtros iniciales con grupos por defecto si hay
+  aplicarFiltros();
+}
+
+// Modificamos aplicarFiltros() para leer de checkboxes
 function aplicarFiltros() {
   if (!datosOriginales) return;
 
-  const grupoSeleccionado = document.getElementById("grupos").value;
+  const contenedor = document.getElementById("grupos-container");
+  const gruposSeleccionados = Array.from(
+    contenedor.querySelectorAll("input[type='checkbox']:checked")
+  ).map((opt) => opt.value);
+
   const datosFiltrados = filtrarPorGrupoYSemana(
     datosOriginales,
-    grupoSeleccionado,
+    gruposSeleccionados,
     semanaActual
   );
 
@@ -317,7 +405,7 @@ function cargarCronogramaXHR() {
           datosOriginales = res.data;
 
           // Crear select de grupos
-          crearSelectGrupos(res.data);
+          crearMultiSelectGrupos(res.data);
 
           // Aplicar filtros iniciales
           aplicarFiltros();

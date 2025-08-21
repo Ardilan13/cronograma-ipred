@@ -49,8 +49,6 @@ app.post("/cronograma", async (req, res) => {
       btnBuscar.click(),
     ]);
 
-    console.log("✅ Respuesta recibida de UIS");
-
     // 7. Obtener la respuesta como texto o JSON
     const contentType = response.headers()["content-type"];
     let data;

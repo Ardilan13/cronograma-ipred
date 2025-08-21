@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cronograma Académico</title>
     <link rel="stylesheet" href="style.css" />
+    <script src="script.js"></script>
   </head>
   <body>
     <div class="container">
@@ -48,28 +49,30 @@
       </form> -->
 
       <div class="filter-group">
-        <label for="grupos">Grupo:</label>
-        <select name="grupos" id="grupos">
-          <option value="">Seleccionar grupo</option>
-        </select>
+        <label for="grupos">Grupos:</label>
+        <div id="multiSelect" class="multi-select">
+          <div id="selected" class="selected">Seleccionar grupo(s)</div>
+          <div id="dropdown" class="dropdown hidden">
+            <input type="text" id="searchBox" placeholder="Buscar grupo..." />
+            <div id="grupos-container" class="grupos-container"></div>
+          </div>
+        </div>
       </div>
 
       <div class="week-navigation" id="weekNavigation" style="display: none">
         <button type="button" class="week-nav-btn" onclick="cambiarSemana(-1)">
-          ⬅️ Semana Anterior
+          ⬅️ Anterior
         </button>
-        <div class="week-info" id="weekInfo">
-          <!-- Información de la semana se mostrará aquí -->
-        </div>
+        <div class="week-info" id="weekInfo"></div>
         <button type="button" class="week-nav-btn" onclick="cambiarSemana(1)">
-          Semana Siguiente ➡️
+          Siguiente ➡️
         </button>
       </div>
 
       <div id="resultado">
         <div class="no-data">
           Seleccione los filtros y presione "Cargar Cronograma" para ver los
-          datos
+          datos.
         </div>
       </div>
     </div>
