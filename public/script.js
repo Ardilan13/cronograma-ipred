@@ -290,8 +290,6 @@ function crearMultiSelectGrupos(datos) {
     localStorage.getItem("filtrosCronograma")
   );
   const gruposGuardados = filtrosGuardados?.grupos || [];
-
-  const gruposSeleccionadosPorDefecto = ["EN1", "DN1"];
   const seleccionadosInicialmente = [];
 
   gruposUnicos.forEach((grupo) => {
@@ -304,10 +302,7 @@ function crearMultiSelectGrupos(datos) {
     checkbox.id = `grupo-${grupo}`;
 
     // Seleccionar por defecto si está en guardados o en default
-    if (
-      gruposGuardados.includes(grupo) ||
-      gruposSeleccionadosPorDefecto.includes(grupo)
-    ) {
+    if (gruposGuardados.includes(grupo)) {
       checkbox.checked = true;
       seleccionadosInicialmente.push(grupo);
     }
@@ -506,10 +501,18 @@ function cargarCronogramaXHR() {
   xhr.send(JSON.stringify(payload));
 }
 
-// Cargar datos de ejemplo al inicio
+// Cargar datos al inicio
 window.onload = function () {
-  // Primero cargamos filtros guardados
-  cargarFiltrosDesdeLocalStorage();
-  // Luego hacemos busqueda en el cronograma
-  cargarCronogramaXHR();
+  const filtrosGuardados = JSON.parse(
+    localStorage.getItem("filtrosCronograma")
+  );
+
+  // Solo cargar automáticamente si hay filtros guardados
+  if (filtrosGuardados) {
+    // Primero cargamos filtros guardados
+    cargarFiltrosDesdeLocalStorage();
+
+    // Luego hacemos busqueda en el cronograma
+    cargarCronogramaXHR();
+  }
 };
