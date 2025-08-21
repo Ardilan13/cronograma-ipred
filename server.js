@@ -4,6 +4,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const chromium = require("@sparticuz/chromium");
 const puppeteer = require("puppeteer");
 const path = require("path");
 
@@ -47,6 +48,27 @@ async function getBrowser() {
   return browser;
 }
 
+async function getBrowser() {
+  if (browser && browser.isConnected()) return browser;
+
+  const isLocal = !process.env.AWS_REGION && !process.env.RENDER;
+
+  browser = await puppeteer.launch({
+    headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+    ],
+    defaultViewport: chromium.defaultViewport,
+    executablePath: isLocal
+      ? require("puppeteer").executablePath() // Local usa puppeteer normal
+      : await chromium.executablePath(), // En Render usa chromium optimizado
+  });
+
+  return browser;
+}
 /* ------------------------------- Cache simple ------------------------------ */
 const cache = new Map(); // key -> { t, data }
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 min

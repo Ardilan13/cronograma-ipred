@@ -1,8 +1,7 @@
-require("dotenv").config();
-const PORT = process.env.PORT || 3000;
 const BASE_URL =
-  `${process.env.BASE_URL}:${PORT}` || `http://localhost:${PORT}`;
-let datosOriginales = null;
+  window.location.hostname === "localhost"
+    ? "http://localhost:3000"
+    : "https://cronograma-ipred.onrender.com";
 let semanaActual = 0; // 0 = semana actual, -1 = anterior, 1 = siguiente
 
 function formatearFecha(fechaStr) {
