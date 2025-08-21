@@ -1,6 +1,7 @@
 // server.js
 "use strict";
 
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const puppeteer = require("puppeteer");
@@ -8,6 +9,8 @@ const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const BASE_URL =
+  `${process.env.BASE_URL}:${PORT}` || `http://localhost:${PORT}`;
 
 app.use(cors({ origin: true })); // ajústalo a tu dominio en prod
 app.use(express.urlencoded({ extended: true }));
@@ -202,7 +205,7 @@ app.post("/cronograma", async (req, res) => {
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 const server = app.listen(PORT, () => {
-  console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`✅ Servidor corriendo en ${BASE_URL}`);
 });
 
 async function gracefulShutdown() {

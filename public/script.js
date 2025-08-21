@@ -1,3 +1,7 @@
+require("dotenv").config();
+const PORT = process.env.PORT || 3000;
+const BASE_URL =
+  `${process.env.BASE_URL}:${PORT}` || `http://localhost:${PORT}`;
 let datosOriginales = null;
 let semanaActual = 0; // 0 = semana actual, -1 = anterior, 1 = siguiente
 
@@ -396,7 +400,7 @@ function cargarCronogramaXHR() {
   };
 
   const xhr = new XMLHttpRequest();
-  xhr.open("POST", "http://localhost:3000/cronograma", true);
+  xhr.open("POST", `${BASE_URL}/cronograma`, true);
   xhr.setRequestHeader("Content-Type", "application/json");
 
   const resultado = document.getElementById("resultado");
