@@ -285,10 +285,15 @@ function crearMultiSelectGrupos(datos) {
   const datosNormalizados = Array.isArray(datos) ? datos[2] : datos;
   const gruposUnicos = [...new Set(datosNormalizados)].sort();
 
+  // Recuperar grupos guardados
+  const filtrosGuardados = JSON.parse(
+    localStorage.getItem("filtrosCronograma")
+  );
+  const gruposGuardados = filtrosGuardados?.grupos || [];
+
   const gruposSeleccionadosPorDefecto = ["EN1", "DN1"];
   const seleccionadosInicialmente = [];
 
-  // Crear checkboxes dinámicamente
   gruposUnicos.forEach((grupo) => {
     const optionDiv = document.createElement("div");
     optionDiv.classList.add("grupo-option");
@@ -298,8 +303,11 @@ function crearMultiSelectGrupos(datos) {
     checkbox.value = grupo;
     checkbox.id = `grupo-${grupo}`;
 
-    // Seleccionar EN1 y DN1 por defecto si existen
-    if (gruposSeleccionadosPorDefecto.includes(grupo)) {
+    // Seleccionar por defecto si está en guardados o en default
+    if (
+      gruposGuardados.includes(grupo) ||
+      gruposSeleccionadosPorDefecto.includes(grupo)
+    ) {
       checkbox.checked = true;
       seleccionadosInicialmente.push(grupo);
     }
@@ -313,24 +321,19 @@ function crearMultiSelectGrupos(datos) {
     contenedor.appendChild(optionDiv);
   });
 
-  // Mostrar/ocultar dropdown al hacer clic en el selectedBox
+  // Mostrar/ocultar dropdown
   selectedBox.onclick = (e) => {
-    e.stopPropagation(); // Evita que se dispare el evento global
+    e.stopPropagation();
     dropdown.classList.toggle("hidden");
     searchBox.focus();
   };
 
-  // Ocultar el dropdown si se hace clic fuera
   document.addEventListener("click", (e) => {
-    if (
-      !dropdown.contains(e.target) && // No está haciendo clic dentro del dropdown
-      !selectedBox.contains(e.target) // No está haciendo clic en el botón que abre
-    ) {
+    if (!dropdown.contains(e.target) && !selectedBox.contains(e.target)) {
       dropdown.classList.add("hidden");
     }
   });
 
-  // Filtrar grupos mientras escribes
   searchBox.addEventListener("input", () => {
     const filtro = searchBox.value.toLowerCase();
     document.querySelectorAll(".grupo-option").forEach((option) => {
@@ -339,7 +342,6 @@ function crearMultiSelectGrupos(datos) {
     });
   });
 
-  // Actualizar etiqueta y aplicar filtros cuando se seleccionan grupos
   contenedor.addEventListener("change", () => {
     const seleccionados = Array.from(
       contenedor.querySelectorAll("input[type='checkbox']:checked")
@@ -350,18 +352,64 @@ function crearMultiSelectGrupos(datos) {
         ? seleccionados.join(", ")
         : "Seleccionar grupo(s)";
 
+    guardarFiltrosLocalStorage(); // Guardar cambios inmediatamente
     aplicarFiltros();
   });
 
-  // Mostrar seleccionados por defecto si hay
-  if (seleccionadosInicialmente.length > 0) {
-    selectedBox.textContent = seleccionadosInicialmente.join(", ");
-  } else {
-    selectedBox.textContent = "Seleccionar grupo(s)";
-  }
+  selectedBox.textContent =
+    seleccionadosInicialmente.length > 0
+      ? seleccionadosInicialmente.join(", ")
+      : "Seleccionar grupo(s)";
 
-  // Aplicar filtros iniciales con grupos por defecto si hay
   aplicarFiltros();
+}
+
+function guardarFiltrosLocalStorage() {
+  const form = document.getElementById("filtros");
+  const data = {
+    programa: form.programa.value,
+    sede: form.sede.value,
+    jornada: form.jornada.value,
+  };
+
+  // Guardar también los grupos seleccionados
+  const gruposSeleccionados = Array.from(
+    document.querySelectorAll(
+      "#grupos-container input[type='checkbox']:checked"
+    )
+  ).map((input) => input.value);
+
+  data.grupos = gruposSeleccionados;
+
+  localStorage.setItem("filtrosCronograma", JSON.stringify(data));
+}
+
+document
+  .getElementById("filtros")
+  .addEventListener("change", guardarFiltrosLocalStorage);
+document
+  .getElementById("grupos-container")
+  .addEventListener("change", guardarFiltrosLocalStorage);
+
+function cargarFiltrosDesdeLocalStorage() {
+  const data = JSON.parse(localStorage.getItem("filtrosCronograma"));
+  if (!data) return;
+
+  const form = document.getElementById("filtros");
+
+  if (data.programa) form.programa.value = data.programa;
+  if (data.sede) form.sede.value = data.sede;
+  if (data.jornada) form.jornada.value = data.jornada;
+
+  // Si ya se cargaron grupos, seleccionarlos
+  if (data.grupos && data.grupos.length > 0) {
+    data.grupos.forEach((g) => {
+      const checkbox = document.querySelector(
+        `#grupos-container input[value="${g}"]`
+      );
+      if (checkbox) checkbox.checked = true;
+    });
+  }
 }
 
 // Modificamos aplicarFiltros() para leer de checkboxes
@@ -460,5 +508,8 @@ function cargarCronogramaXHR() {
 
 // Cargar datos de ejemplo al inicio
 window.onload = function () {
+  // Primero cargamos filtros guardados
+  cargarFiltrosDesdeLocalStorage();
+  // Luego hacemos busqueda en el cronograma
   cargarCronogramaXHR();
 };
