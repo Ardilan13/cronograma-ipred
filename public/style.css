@@ -49,8 +49,14 @@ h1 {
   font-size: 0.9rem;
 }
 
-#gruposWrapper {
+.filters-second {
+  display: flex;
   margin-bottom: 10px;
+}
+
+#gruposWrapper,
+#materiasWrapper {
+  width: 100%;
 }
 
 select,
@@ -270,7 +276,8 @@ button:hover {
 }
 
 /* Contenedor de checkboxes */
-.grupos-container {
+.grupos-container,
+.materias-container {
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -278,7 +285,8 @@ button:hover {
 }
 
 /* Cada opción */
-.grupo-option {
+.grupo-option,
+.materia-option {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -288,11 +296,13 @@ button:hover {
   transition: background 0.2s;
 }
 
-.grupo-option:hover {
+.grupo-option:hover,
+.materia-option:hover {
   background-color: #f5f8ff;
 }
 
-.grupo-option input[type="checkbox"] {
+.grupo-option input[type="checkbox"],
+.materia-option input[type="checkbox"] {
   accent-color: #007bff;
   width: 18px;
   height: 18px;
@@ -310,12 +320,21 @@ button:hover {
     padding: 0;
   }
 
+  select,
+  button,
+  input {
+    padding: 8px 16px;
+    border-radius: 12px;
+    width: 100%;
+  }
+
   .container {
     margin: 10px;
     padding: 10px;
   }
 
-  .filters {
+  .filters,
+  .filters-second {
     flex-direction: column;
   }
 
@@ -323,9 +342,12 @@ button:hover {
     font-size: 1.5rem;
   }
 
-  .week-navigation {
-    flex-direction: column;
-    gap: 10px;
+  .week-navigation span {
+    display: none;
+  }
+
+  .week-navigation button {
+    width: auto !important;
   }
 
   .multi-select {
@@ -350,14 +372,6 @@ button:hover {
   }
 
   .filter-group {
-    width: 100%;
-  }
-
-  select,
-  button,
-  input {
-    padding: 8px 16px;
-    border-radius: 12px;
     width: 100%;
   }
 }

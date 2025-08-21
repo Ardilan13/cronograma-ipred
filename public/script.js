@@ -3,6 +3,25 @@ const BASE_URL =
     ? "http://localhost:3000"
     : "https://cronograma-ipred.vercel.app";
 let semanaActual = 0; // 0 = semana actual, -1 = anterior, 1 = siguiente
+// Asigna un color único a cada grupo
+const coloresGrupos = {};
+const paletaColores = [
+  "#1E90FF",
+  "#FF6347",
+  "#32CD32",
+  "#FF69B4",
+  "#FFA500",
+  "#8A2BE2",
+  "#00CED1",
+  "#FF4500",
+  "#2E8B57",
+  "#FF1493",
+  "#6495ED",
+  "#FFD700",
+  "#DC143C",
+  "#20B2AA",
+  "#9370DB",
+];
 
 function formatearFecha(fechaStr) {
   const fecha = new Date(fechaStr);
@@ -242,26 +261,6 @@ function crearTablaCalendario(datos) {
   return html;
 }
 
-// Asigna un color único a cada grupo
-const coloresGrupos = {};
-const paletaColores = [
-  "#1E90FF",
-  "#FF6347",
-  "#32CD32",
-  "#FF69B4",
-  "#FFA500",
-  "#8A2BE2",
-  "#00CED1",
-  "#FF4500",
-  "#2E8B57",
-  "#FF1493",
-  "#6495ED",
-  "#FFD700",
-  "#DC143C",
-  "#20B2AA",
-  "#9370DB",
-];
-
 function getColorForGroup(grupo) {
   // Si ya asignamos un color a este grupo, usamos el mismo
   if (coloresGrupos[grupo]) return coloresGrupos[grupo];
@@ -272,6 +271,19 @@ function getColorForGroup(grupo) {
 
   coloresGrupos[grupo] = color;
   return color;
+}
+
+function cerrarOtrosDropdowns(exceptoId) {
+  const dropdowns = ["dropdown", "dropdownMaterias"];
+
+  dropdowns.forEach((dropdownId) => {
+    if (dropdownId !== exceptoId) {
+      const dropdown = document.getElementById(dropdownId);
+      if (dropdown) {
+        dropdown.classList.add("hidden");
+      }
+    }
+  });
 }
 
 function crearMultiSelectGrupos(datos) {
@@ -319,6 +331,10 @@ function crearMultiSelectGrupos(datos) {
   // Mostrar/ocultar dropdown
   selectedBox.onclick = (e) => {
     e.stopPropagation();
+
+    // Cerrar otros dropdowns antes de abrir este
+    cerrarOtrosDropdowns("dropdown");
+
     dropdown.classList.toggle("hidden");
     searchBox.focus();
   };
@@ -327,14 +343,6 @@ function crearMultiSelectGrupos(datos) {
     if (!dropdown.contains(e.target) && !selectedBox.contains(e.target)) {
       dropdown.classList.add("hidden");
     }
-  });
-
-  searchBox.addEventListener("input", () => {
-    const filtro = searchBox.value.toLowerCase();
-    document.querySelectorAll(".grupo-option").forEach((option) => {
-      const texto = option.textContent.toLowerCase();
-      option.style.display = texto.includes(filtro) ? "flex" : "none";
-    });
   });
 
   contenedor.addEventListener("change", () => {
@@ -359,22 +367,142 @@ function crearMultiSelectGrupos(datos) {
   aplicarFiltros();
 }
 
-function guardarFiltrosLocalStorage() {
-  const form = document.getElementById("filtros");
-  const data = {
-    programa: form.programa.value,
-    sede: form.sede.value,
-    jornada: form.jornada.value,
-  };
+function crearMultiSelectMaterias(datos) {
+  const contenedor = document.getElementById("materias-container");
+  contenedor.innerHTML = "";
+  const selectedBox = document.getElementById("selectedMaterias");
+  const dropdown = document.getElementById("dropdownMaterias");
+  const searchBox = document.getElementById("searchBoxMaterias");
 
-  // Guardar también los grupos seleccionados
+  // Obtener materias únicas según los grupos seleccionados
   const gruposSeleccionados = Array.from(
     document.querySelectorAll(
       "#grupos-container input[type='checkbox']:checked"
     )
   ).map((input) => input.value);
 
-  data.grupos = gruposSeleccionados;
+  const datosNormalizados = Array.isArray(datos) ? datos[0] : datos;
+  const materiasSet = new Set();
+
+  Object.keys(datosNormalizados).forEach((programa) => {
+    Object.keys(datosNormalizados[programa]).forEach((nivel) => {
+      const cursos = datosNormalizados[programa][nivel];
+      cursos.forEach((curso) => {
+        // Solo considerar cursos que tengan actividades en los grupos seleccionados
+        const tieneGrupoSeleccionado = curso.actividades.some((act) =>
+          gruposSeleccionados.includes(act.grupo)
+        );
+        if (tieneGrupoSeleccionado) {
+          materiasSet.add(curso.nombre_asignatura);
+        }
+      });
+    });
+  });
+
+  const materiasUnicas = [...materiasSet].sort();
+
+  // Recuperar materias guardadas
+  const filtrosGuardados = JSON.parse(
+    localStorage.getItem("filtrosCronograma")
+  );
+  const materiasGuardadas = filtrosGuardados?.materias || [];
+  const seleccionadasInicialmente = [];
+
+  materiasUnicas.forEach((materia) => {
+    const optionDiv = document.createElement("div");
+    optionDiv.classList.add("materia-option");
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = materia;
+    checkbox.id = `materia-${materia}`;
+
+    if (materiasGuardadas.includes(materia)) {
+      checkbox.checked = true;
+      seleccionadasInicialmente.push(materia);
+    }
+
+    const label = document.createElement("label");
+    label.setAttribute("for", `materia-${materia}`);
+    label.textContent = materia;
+
+    optionDiv.appendChild(checkbox);
+    optionDiv.appendChild(label);
+    contenedor.appendChild(optionDiv);
+  });
+
+  selectedBox.textContent =
+    seleccionadasInicialmente.length > 0
+      ? seleccionadasInicialmente.join(", ")
+      : "Seleccionar materia(s)";
+
+  // Mostrar/ocultar dropdown
+  selectedBox.onclick = (e) => {
+    e.stopPropagation();
+
+    // Cerrar otros dropdowns antes de abrir este
+    cerrarOtrosDropdowns("dropdown");
+
+    dropdown.classList.toggle("hidden");
+    searchBox.focus();
+  };
+
+  document.addEventListener("click", (e) => {
+    if (!dropdown.contains(e.target) && !selectedBox.contains(e.target)) {
+      dropdown.classList.add("hidden");
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!dropdown.contains(e.target) && !selectedBox.contains(e.target)) {
+      dropdown.classList.add("hidden");
+    }
+  });
+
+  searchBox.addEventListener("input", () => {
+    const filtro = searchBox.value.toLowerCase();
+    document.querySelectorAll(".materia-option").forEach((option) => {
+      const texto = option.textContent.toLowerCase();
+      option.style.display = texto.includes(filtro) ? "flex" : "none";
+    });
+  });
+
+  contenedor.addEventListener("change", () => {
+    const seleccionadas = Array.from(
+      contenedor.querySelectorAll("input[type='checkbox']:checked")
+    ).map((input) => input.value);
+
+    selectedBox.textContent =
+      seleccionadas.length > 0
+        ? seleccionadas.join(", ")
+        : "Seleccionar materia(s)";
+
+    guardarFiltrosLocalStorage(); // Guardar cambios
+    aplicarFiltros();
+  });
+}
+
+function guardarFiltrosLocalStorage() {
+  const form = document.getElementById("filtros");
+  const gruposSeleccionados = Array.from(
+    document.querySelectorAll(
+      "#grupos-container input[type='checkbox']:checked"
+    )
+  ).map((input) => input.value);
+
+  const materiasSeleccionadas = Array.from(
+    document.querySelectorAll(
+      "#materias-container input[type='checkbox']:checked"
+    )
+  ).map((input) => input.value);
+
+  const data = {
+    programa: form.programa.value,
+    sede: form.sede.value,
+    jornada: form.jornada.value,
+    grupos: gruposSeleccionados,
+    materias: materiasSeleccionadas,
+  };
 
   localStorage.setItem("filtrosCronograma", JSON.stringify(data));
 }
@@ -407,20 +535,56 @@ function cargarFiltrosDesdeLocalStorage() {
   }
 }
 
-// Modificamos aplicarFiltros() para leer de checkboxes
 function aplicarFiltros() {
   if (!datosOriginales) return;
 
-  const contenedor = document.getElementById("grupos-container");
   const gruposSeleccionados = Array.from(
-    contenedor.querySelectorAll("input[type='checkbox']:checked")
+    document.querySelectorAll(
+      "#grupos-container input[type='checkbox']:checked"
+    )
   ).map((opt) => opt.value);
 
-  const datosFiltrados = filtrarPorGrupoYSemana(
+  const materiasSeleccionadas = Array.from(
+    document.querySelectorAll(
+      "#materias-container input[type='checkbox']:checked"
+    )
+  ).map((opt) => opt.value);
+
+  let datosFiltrados = filtrarPorGrupoYSemana(
     datosOriginales,
     gruposSeleccionados,
     semanaActual
   );
+
+  // Filtrar por materias seleccionadas
+  if (materiasSeleccionadas.length > 0) {
+    // Normalizar nombres de materias seleccionadas a minúsculas y sin espacios al inicio/final
+    const materiasNorm = materiasSeleccionadas.map((m) =>
+      m.trim().toLowerCase()
+    );
+
+    datosFiltrados = datosFiltrados.map((programas) => {
+      const result = {};
+      Object.keys(programas).forEach((programa) => {
+        result[programa] = {};
+        Object.keys(programas[programa]).forEach((nivel) => {
+          const cursos = programas[programa][nivel];
+          const cursosFiltrados = cursos.filter((curso) => {
+            // Comparar el nombre de la asignatura del CURSO, no de la actividad
+            if (!curso.nombre_asignatura) return false;
+
+            const nombreCurso = curso.nombre_asignatura.trim().toLowerCase();
+            return materiasNorm.includes(nombreCurso);
+          });
+
+          if (cursosFiltrados.length > 0) {
+            result[programa][nivel] = cursosFiltrados;
+          }
+        });
+      });
+      return result;
+    });
+  }
 
   const resultado = document.getElementById("resultado");
   const tablaHTML = crearTablaCalendario(datosFiltrados);
@@ -460,6 +624,7 @@ function cargarCronogramaXHR() {
   resultado.innerHTML = '<div class="loading">🔄 Cargando cronograma...</div>';
   document.getElementById("weekNavigation").style.display = "none";
   document.getElementById("gruposWrapper").style.display = "none";
+  document.getElementById("materiasWrapper").style.display = "none";
 
   semanaActual = 0;
 
@@ -474,8 +639,14 @@ function cargarCronogramaXHR() {
           // Crear multi-select de grupos
           crearMultiSelectGrupos(res.data);
 
+          // Crear multi-select de materias
+          crearMultiSelectMaterias(res.data);
+
           // Mostrar contenedor de grupos
           document.getElementById("gruposWrapper").style.display = "flex";
+
+          // Mostrar contenedor de materias
+          document.getElementById("materiasWrapper").style.display = "flex";
 
           // Aplicar filtros iniciales
           aplicarFiltros();

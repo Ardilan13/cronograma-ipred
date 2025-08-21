@@ -12,28 +12,29 @@
     <div class="container">
       <h1>📅 Cronograma Académico</h1>
 
-      <!-- FILTROS PRINCIPALES -->
+      <!-- FORMULARIO DE FILTROS PRINCIPALES -->
       <form id="filtros" class="filters">
+        <!-- Programa -->
         <div class="filter-group">
           <label for="programa">Programa:</label>
           <select name="programa" id="programa" required>
             <option value="" selected>Seleccionar programa</option>
-              <option value="89">Administracion agroindustrial</option>
-              <option value="61">Artes plasticas</option>
-              <option value="71">Gestion empresarial</option>
-              <option value="87">
-                Tecnico profesional en produccion agropecuaria
-              </option>
-              <option value="8">Tecnologia agroindustrial</option>
-              <option value="70">Tecnologia empresarial</option>
-              <option value="82">Tecnologia en regencia de farmacia</option>
-              <option value="48">
-                Tecnologia gestion judicial e investigacion crimin
-              </option>
-            </select>
+            <option value="89">Administración agroindustrial</option>
+            <option value="61">Artes plásticas</option>
+            <option value="71">Gestión empresarial</option>
+            <option value="87">
+              Técnico profesional en producción agropecuaria
+            </option>
+            <option value="8">Tecnología agroindustrial</option>
+            <option value="70">Tecnología empresarial</option>
+            <option value="82">Tecnología en regencia de farmacia</option>
+            <option value="48">
+              Tecnología gestión judicial e investigación crimin
+            </option>
           </select>
         </div>
 
+        <!-- Sede -->
         <div class="filter-group">
           <label for="sede">Sede:</label>
           <select name="sede" id="sede" required>
@@ -48,6 +49,7 @@
           </select>
         </div>
 
+        <!-- Jornada -->
         <div class="filter-group">
           <label for="jornada">Jornada:</label>
           <select name="jornada" id="jornada" required>
@@ -57,17 +59,37 @@
           </select>
         </div>
 
-        <button type="submit" id="btnCargar">🔍 Cargar Cronograma</button>
+        <button type="submit" id="btnCargar">🔍 Buscar</button>
       </form>
 
-      <!-- SELECTOR DE GRUPOS -->
-      <div class="filter-group" id="gruposWrapper" style="display: none">
-        <label>Grupos:</label>
-        <div id="multiSelect" class="multi-select">
-          <div id="selected" class="selected">Seleccionar grupo(s)</div>
-          <div id="dropdown" class="dropdown hidden">
-            <input type="text" id="searchBox" placeholder="Buscar grupo..." />
-            <div id="grupos-container" class="grupos-container"></div>
+      <div class="filters-second">
+        <!-- SELECTOR DE GRUPOS -->
+        <div class="filter-group" id="gruposWrapper" style="display: none">
+          <label for="multiSelect">Grupos:</label>
+          <div id="multiSelect" class="multi-select">
+            <div id="selected" class="selected">Seleccionar grupo(s)</div>
+            <div id="dropdown" class="dropdown hidden">
+              <input type="text" id="searchBox" placeholder="Buscar grupo..." />
+              <div id="grupos-container" class="grupos-container"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SELECTOR DE MATERIAS -->
+        <div class="filter-group" id="materiasWrapper" style="display: none">
+          <label for="multiSelectMaterias">Materias:</label>
+          <div id="multiSelectMaterias" class="multi-select">
+            <div id="selectedMaterias" class="selected">
+              Seleccionar materia(s)
+            </div>
+            <div id="dropdownMaterias" class="dropdown hidden">
+              <input
+                type="text"
+                id="searchBoxMaterias"
+                placeholder="Buscar materia..."
+              />
+              <div id="materias-container" class="materias-container"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -75,19 +97,18 @@
       <!-- NAVEGACIÓN DE SEMANAS -->
       <div class="week-navigation" id="weekNavigation" style="display: none">
         <button type="button" class="week-nav-btn" onclick="cambiarSemana(-1)">
-          ⬅️ Anterior
+          ⬅️ <span>Anterior</span>
         </button>
         <div class="week-info" id="weekInfo"></div>
         <button type="button" class="week-nav-btn" onclick="cambiarSemana(1)">
-          Siguiente ➡️
+          <span>Siguiente</span> ➡️
         </button>
       </div>
 
       <!-- RESULTADOS -->
       <div id="resultado">
         <div class="no-data">
-          Seleccione los filtros y presione "Cargar Cronograma" para ver los
-          datos.
+          Seleccione los filtros y presione "Buscar" para ver el cronograma.
         </div>
       </div>
     </div>
