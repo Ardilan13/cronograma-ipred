@@ -215,7 +215,7 @@ function crearTablaCalendario(datos) {
             <strong>${actividad.nombre_asignatura}</strong>
           </div>
           <div class="activity-details">
-            <div>${actividad.nombre_tipo_actividad}</div>
+            <div>📄 ${actividad.nombre_tipo_actividad}</div>
             <div>👨‍🏫 ${actividad.nombre_profesor}</div>
             <div class="activity-time">🕐 ${horaInicio} - ${horaFin}</div>
             <div class="activity-location">📍 ${ubicacion}</div>
@@ -374,15 +374,26 @@ function aplicarFiltros() {
   actualizarInfoSemana();
 }
 
-function cargarCronogramaXHR() {
-  // const form = document.getElementById("filtros");
-  // const formData = new FormData(form);
+let gruposSeleccionados = [];
 
-  // const payload = {
-  //   programa: formData.get("programa"),
-  //   sede: formData.get("sede"),
-  //   jornada: formData.get("jornada"),
-  // };
+// Manejar envío de formulario
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("filtros");
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    cargarCronogramaXHR();
+  });
+});
+
+function cargarCronogramaXHR() {
+  const form = document.getElementById("filtros");
+  const formData = new FormData(form);
+
+  const payload = {
+    programa: formData.get("programa"),
+    sede: formData.get("sede"),
+    jornada: formData.get("jornada"),
+  };
 
   const xhr = new XMLHttpRequest();
   xhr.open("POST", "http://localhost:3000/cronograma", true);
@@ -390,10 +401,10 @@ function cargarCronogramaXHR() {
 
   const resultado = document.getElementById("resultado");
   resultado.innerHTML = '<div class="loading">🔄 Cargando cronograma...</div>';
-
-  // Ocultar navegación de semana mientras carga
   document.getElementById("weekNavigation").style.display = "none";
-  semanaActual = 0; // Resetear a semana actual
+  document.getElementById("gruposWrapper").style.display = "none";
+
+  semanaActual = 0;
 
   xhr.onload = function () {
     if (xhr.status === 200) {
@@ -401,11 +412,13 @@ function cargarCronogramaXHR() {
         const res = JSON.parse(xhr.responseText);
 
         if (res.data && res.data.length > 0) {
-          // Guardar datos originales
           datosOriginales = res.data;
 
-          // Crear select de grupos
+          // Crear multi-select de grupos
           crearMultiSelectGrupos(res.data);
+
+          // Mostrar contenedor de grupos
+          document.getElementById("gruposWrapper").style.display = "block";
 
           // Aplicar filtros iniciales
           aplicarFiltros();
@@ -428,8 +441,7 @@ function cargarCronogramaXHR() {
       '<div class="no-data" style="color:red;">❌ Error de red al cargar cronograma</div>';
   };
 
-  // xhr.send(JSON.stringify(payload));
-  xhr.send();
+  xhr.send(JSON.stringify(payload));
 }
 
 // Cargar datos de ejemplo al inicio

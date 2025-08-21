@@ -5,51 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cronograma Académico</title>
     <link rel="stylesheet" href="style.css" />
-    <script src="script.js"></script>
+    <script defer src="script.js"></script>
   </head>
   <body>
     <div class="container">
       <h1>📅 Cronograma Académico</h1>
 
-      <!-- <form id="filtros" class="filters">
+      <!-- FILTROS PRINCIPALES -->
+      <form id="filtros" class="filters">
         <div class="filter-group">
           <label for="programa">Programa:</label>
-          <select name="programa" id="programa">
+          <select name="programa" id="programa" required>
             <option value="">Seleccionar programa</option>
-            <option value="82">Programa 82</option>
+              <option value="89">Administracion agroindustrial</option>
+              <option value="61">Artes plasticas</option>
+              <option value="71">Gestion empresarial</option>
+              <option value="87">
+                Tecnico profesional en produccion agropecuaria
+              </option>
+              <option value="8">Tecnologia agroindustrial</option>
+              <option value="70">Tecnologia empresarial</option>
+              <option value="82" selected>Tecnologia en regencia de farmacia</option>
+              <option value="48">
+                Tecnologia gestion judicial e investigacion crimin
+              </option>
+            </select>
           </select>
         </div>
 
         <div class="filter-group">
           <label for="sede">Sede:</label>
-          <select name="sede" id="sede">
+          <select name="sede" id="sede" required>
             <option value="">Seleccionar sede</option>
-            <option value="10">Sede 10</option>
+            <option value="23">Barbosa</option>
+            <option value="11">Barrancabermeja</option>
+            <option value="10" selected>Bucaramanga</option>
+            <option value="28">Málaga</option>
+            <option value="31">San Alberto</option>
+            <option value="17">Saravena</option>
+            <option value="22">Socorro</option>
           </select>
         </div>
 
         <div class="filter-group">
           <label for="jornada">Jornada:</label>
-          <select name="jornada" id="jornada">
+          <select name="jornada" id="jornada" required>
             <option value="">Seleccionar jornada</option>
-            <option value="2">Nocturna</option>
+            <option value="2" selected>Nocturna</option>
+            <option value="1">Sábados</option>
           </select>
         </div>
 
-        <div class="filter-group">
-          <label for="grupos">Grupo:</label>
-          <select name="grupos" id="grupos">
-            <option value="">Seleccionar grupo</option>
-          </select>
-        </div>
+        <button type="submit" id="btnCargar">🔍 Cargar Cronograma</button>
+      </form>
 
-        <button type="button" onclick="cargarCronogramaXHR()">
-          🔍 Cargar Cronograma
-        </button>
-      </form> -->
-
-      <div class="filter-group">
-        <label for="grupos">Grupos:</label>
+      <!-- SELECTOR DE GRUPOS -->
+      <div class="filter-group" id="gruposWrapper" style="display: none">
+        <label>Grupos:</label>
         <div id="multiSelect" class="multi-select">
           <div id="selected" class="selected">Seleccionar grupo(s)</div>
           <div id="dropdown" class="dropdown hidden">
@@ -59,6 +71,7 @@
         </div>
       </div>
 
+      <!-- NAVEGACIÓN DE SEMANAS -->
       <div class="week-navigation" id="weekNavigation" style="display: none">
         <button type="button" class="week-nav-btn" onclick="cambiarSemana(-1)">
           ⬅️ Anterior
@@ -69,6 +82,7 @@
         </button>
       </div>
 
+      <!-- RESULTADOS -->
       <div id="resultado">
         <div class="no-data">
           Seleccione los filtros y presione "Cargar Cronograma" para ver los
