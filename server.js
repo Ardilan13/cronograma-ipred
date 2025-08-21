@@ -13,7 +13,14 @@ const PORT = process.env.PORT || 3000;
 const BASE_URL =
   `${process.env.BASE_URL}:${PORT}` || `http://localhost:${PORT}`;
 
-app.use(cors({ origin: true })); // ajústalo a tu dominio en prod
+app.use(
+  cors({
+    origin: "*", // o tu dominio en producción
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json({ limit: "1mb" }));
 app.use(express.static(path.join(__dirname, "public")));
@@ -38,7 +45,7 @@ let browser; // singleton
 async function getBrowser() {
   if (browser && browser.isConnected()) return browser;
 
-  const isLocal = !process.env.AWS_REGION && !process.env.RENDER;
+  const isLocal = !process.env.RENDER;
 
   browser = await puppeteer.launch({
     headless: true,

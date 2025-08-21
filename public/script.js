@@ -1,7 +1,7 @@
 const BASE_URL =
   window.location.hostname === "localhost"
     ? "http://localhost:3000"
-    : "https://cronograma-ipred-git-main-dilan-corredors-projects.vercel.app";
+    : "https://cronograma-ipred.vercel.app";
 let semanaActual = 0; // 0 = semana actual, -1 = anterior, 1 = siguiente
 
 function formatearFecha(fechaStr) {
