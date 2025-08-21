@@ -1,11 +1,10 @@
-// server.js
+// server.js optimizado para Vercel
 "use strict";
 
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const chromium = require("@sparticuz/chromium");
-const puppeteer = require("puppeteer");
 const path = require("path");
 
 const app = express();
@@ -15,7 +14,7 @@ const BASE_URL =
 
 app.use(
   cors({
-    origin: "*", // o tu dominio en producción
+    origin: "*",
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
@@ -29,42 +28,54 @@ app.use(express.static(path.join(__dirname, "public")));
 const UIS_URL =
   "https://ipredtic.uis.edu.co/plataformaticv2/?view=cronogramaPublico";
 
-// Valores por defecto (ajústalos)
 const DEFAULTS = {
   programa: "82",
   sede: "10",
-  recurso: "2", // en tu front lo llamabas "jornada" pero el selector es [name="recurso"]
+  recurso: "2",
 };
 
-// límites/validación simple (puedes endurecer con express-validator/zod)
 const isNumStr = (v) => typeof v === "string" && /^[0-9]+$/.test(v);
 
-/* --------------------------- Navegador compartido -------------------------- */
-let browser; // singleton
+/* --------------------------- Configuración del navegador para Vercel -------------------------- */
+async function getBrowserForVercel() {
+  // Configuración específica para Vercel
+  const isVercel = process.env.RENDER;
+  const isLocal = !isVercel;
+  const puppeteer = isLocal ? require("puppeteer") : require("puppeteer-core");
 
-async function getBrowser() {
-  if (browser && browser.isConnected()) return browser;
+  if (isLocal) {
+    // Local development
+    return await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+  }
 
-  const isLocal = !process.env.RENDER;
-
-  browser = await puppeteer.launch({
-    headless: true,
+  // Para Vercel - configuración optimizada
+  return await puppeteer.launch({
     args: [
+      ...chromium.args,
       "--no-sandbox",
       "--disable-setuid-sandbox",
       "--disable-dev-shm-usage",
       "--disable-gpu",
+      "--no-first-run",
+      "--no-zygote",
+      "--single-process", // Importante para Vercel
+      "--disable-extensions",
+      "--disable-background-timer-throttling",
+      "--disable-backgrounding-occluded-windows",
+      "--disable-renderer-backgrounding",
     ],
     defaultViewport: chromium.defaultViewport,
-    executablePath: isLocal
-      ? require("puppeteer").executablePath() // Local usa puppeteer normal
-      : await chromium.executablePath(), // En Render usa chromium optimizado
+    executablePath: await chromium.executablePath(),
+    headless: chromium.headless,
+    ignoreHTTPSErrors: true,
   });
-
-  return browser;
 }
+
 /* ------------------------------- Cache simple ------------------------------ */
-const cache = new Map(); // key -> { t, data }
+const cache = new Map();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 min
 
 function cacheKey(params) {
@@ -87,18 +98,17 @@ function setCache(key, data) {
 
 /* ----------------------------- Utilidades Page ----------------------------- */
 async function newOptimizedPage() {
-  const br = await getBrowser();
-  const page = await br.newPage();
+  const browser = await getBrowserForVercel();
+  const page = await browser.newPage();
 
-  // Viewport pequeño (menos coste)
-  await page.setViewport({ width: 1280, height: 800, deviceScaleFactor: 1 });
+  // Viewport más pequeño para Vercel
+  await page.setViewport({ width: 1024, height: 768, deviceScaleFactor: 1 });
 
-  // User Agent estable
   await page.setUserAgent(
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
   );
 
-  // Bloquear recursos no necesarios
+  // Interceptar y bloquear recursos innecesarios
   await page.setRequestInterception(true);
   page.on("request", (req) => {
     const rtype = req.resourceType();
@@ -113,89 +123,107 @@ async function newOptimizedPage() {
     return req.continue();
   });
 
-  return page;
+  return { browser, page };
 }
 
 /* ------------------------------- Core scrape ------------------------------- */
-/**
- * Hace la consulta en UIS llenando selects y capturando la respuesta XHR.
- * Tiene reintentos con backoff en caso de fallo temporal.
- */
 async function fetchCronograma(
   { programa, sede, recurso },
-  { retries = 2 } = {}
+  { retries = 1 } = {} // Menos reintentos en Vercel
 ) {
   let attempt = 0;
   let lastErr;
-  while (attempt <= retries) {
-    const page = await newOptimizedPage();
-    try {
-      // Timeout de navegación
-      page.setDefaultNavigationTimeout(25000);
-      page.setDefaultTimeout(25000);
 
-      await page.goto(UIS_URL, { waitUntil: "domcontentloaded" });
+  while (attempt <= retries) {
+    let browser;
+    let page;
+
+    try {
+      const browserData = await newOptimizedPage();
+      browser = browserData.browser;
+      page = browserData.page;
+
+      // Timeouts más cortos para Vercel
+      page.setDefaultNavigationTimeout(15000);
+      page.setDefaultTimeout(15000);
+
+      await page.goto(UIS_URL, {
+        waitUntil: "domcontentloaded",
+        timeout: 15000,
+      });
 
       // Asegurar existencia de selects
-      await page.waitForSelector('[name="Programa"]', { visible: true });
-      await page.waitForSelector('[name="Sede"]', { visible: true });
-      await page.waitForSelector('[name="recurso"]', { visible: true });
+      await page.waitForSelector('[name="Programa"]', {
+        visible: true,
+        timeout: 10000,
+      });
+      await page.waitForSelector('[name="Sede"]', {
+        visible: true,
+        timeout: 10000,
+      });
+      await page.waitForSelector('[name="recurso"]', {
+        visible: true,
+        timeout: 10000,
+      });
 
-      // Seleccionar valores recibidos
+      // Seleccionar valores
       await page.select('[name="Programa"]', programa);
       await page.select('[name="Sede"]', sede);
       await page.select('[name="recurso"]', recurso);
 
-      // Botón buscar
       const btnBuscar = await page.$("#search");
       if (!btnBuscar)
         throw new Error("No se encontró el botón #search en la página.");
 
-      // Esperar la XHR concreta
+      // Esperar la respuesta
       const [response] = await Promise.all([
         page.waitForResponse(
           (res) =>
             res.url().includes("buscarCronograma") &&
             res.request().method() === "POST" &&
             res.status() === 200,
-          { timeout: 25000 }
+          { timeout: 15000 }
         ),
-        // click inicia la búsqueda
         btnBuscar.click(),
       ]);
 
-      // Fuerza parseo a JSON (si falla, lanza)
       const raw = await response.text();
       const data = JSON.parse(raw);
 
+      // Cerrar inmediatamente para liberar recursos
       await page.close().catch(() => {});
+      await browser.close().catch(() => {});
+
       return data;
     } catch (err) {
       lastErr = err;
-      await page.close().catch(() => {});
-      // backoff simple
-      const delay = 500 * Math.pow(2, attempt);
-      await new Promise((r) => setTimeout(r, delay));
+
+      // Asegurar que se cierren los recursos
+      if (page) await page.close().catch(() => {});
+      if (browser) await browser.close().catch(() => {});
+
       attempt++;
       if (attempt > retries) break;
+
+      // Backoff más corto
+      const delay = 1000 * attempt;
+      await new Promise((r) => setTimeout(r, delay));
     }
   }
   throw lastErr || new Error("Fallo desconocido al obtener cronograma");
 }
 
 /* -------------------------------- Endpoints -------------------------------- */
-// GET de proyecto estatico
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// POST: { programa, sede, recurso } (compatible con tu front)
 app.post("/cronograma", async (req, res) => {
   const body = req.body || {};
   const programa = isNumStr(body.programa) ? body.programa : DEFAULTS.programa;
   const sede = isNumStr(body.sede) ? body.sede : DEFAULTS.sede;
   const recurso = isNumStr(body.jornada)
-    ? body.jornada // compat alias
+    ? body.jornada
     : isNumStr(body.recurso)
     ? body.recurso
     : DEFAULTS.recurso;
@@ -213,27 +241,27 @@ app.post("/cronograma", async (req, res) => {
     res.json({ success: true, cached: false, params, data });
   } catch (error) {
     console.error("❌ Error POST /cronograma:", error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      platform: process.env.VERCEL ? "vercel" : "other",
+    });
   }
 });
 
-/* --------------------------- Salud y cierre limpio -------------------------- */
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 const server = app.listen(PORT, () => {
   console.log(`✅ Servidor corriendo en ${BASE_URL}`);
 });
 
-async function gracefulShutdown() {
-  console.log("\n⏳ Cerrando servidor...");
-  server.close(() => console.log("🛑 HTTP cerrado"));
-  if (browser && browser.isConnected()) {
-    try {
-      await browser.close();
-      console.log("🧹 Chromium cerrado");
-    } catch {}
-  }
-  process.exit(0);
+// No es necesario el graceful shutdown en Vercel serverless
+if (!process.env.VERCEL) {
+  process.on("SIGINT", () => {
+    console.log("\n⏳ Cerrando servidor...");
+    server.close(() => process.exit(0));
+  });
+  process.on("SIGTERM", () => {
+    server.close(() => process.exit(0));
+  });
 }
-process.on("SIGINT", gracefulShutdown);
-process.on("SIGTERM", gracefulShutdown);

@@ -1,20 +1,33 @@
 {
-  "version": 2,
+  "functions": {
+    "server.js": {
+      "maxDuration": 40
+    },
+    "api/**/*.js": {
+      "maxDuration": 40
+    }
+  },
   "builds": [
     {
       "src": "server.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["public/**"]
+      }
     }
   ],
   "routes": [
     {
+      "src": "/cronograma",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/health",
+      "dest": "/server.js"
+    },
+    {
       "src": "/(.*)",
       "dest": "/server.js"
     }
-  ],
-  "env": {
-    "PORT": "3000",
-    "BASE_URL": "http://localhost",
-    "RENDER": "true"
-  }
+  ]
 }
