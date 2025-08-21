@@ -4,13 +4,12 @@
   "main": "test.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js",
-    "postinstall": "npx puppeteer browsers install chrome"
+    "start": "node server.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Dilan Corredor",
   "license": "ISC",
-  "description": "",
+  "description": "Cronograma mejorado para el IPRED",
   "dependencies": {
     "@sparticuz/chromium": "^138.0.2",
     "axios": "^1.11.0",
@@ -19,8 +18,5 @@
     "express": "^5.1.0",
     "multer": "^2.0.2",
     "puppeteer": "^24.17.0"
-  },
-  "engines": {
-    "node": ">=20.11.0"
   }
 }
