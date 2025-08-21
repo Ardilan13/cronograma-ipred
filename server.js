@@ -4,6 +4,7 @@
 const express = require("express");
 const cors = require("cors");
 const puppeteer = require("puppeteer");
+const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,6 +12,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors({ origin: true })); // ajústalo a tu dominio en prod
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json({ limit: "1mb" }));
+app.use(express.static(path.join(__dirname, "public")));
 
 /* ---------------------------- Config/constantes ---------------------------- */
 const UIS_URL =
@@ -163,31 +165,9 @@ async function fetchCronograma(
 }
 
 /* -------------------------------- Endpoints -------------------------------- */
-// GET de conveniencia: /cronograma?programa=82&sede=10&recurso=2
-app.get("/cronograma", async (req, res) => {
-  const programa = isNumStr(req.query.programa)
-    ? req.query.programa
-    : DEFAULTS.programa;
-  const sede = isNumStr(req.query.sede) ? req.query.sede : DEFAULTS.sede;
-  const recurso = isNumStr(req.query.recurso)
-    ? req.query.recurso
-    : DEFAULTS.recurso;
-
-  const params = { programa, sede, recurso };
-  const key = cacheKey(params);
-
-  try {
-    const cached = getFromCache(key);
-    if (cached)
-      return res.json({ success: true, cached: true, params, data: cached });
-
-    const data = await fetchCronograma(params);
-    setCache(key, data);
-    res.json({ success: true, cached: false, params, data });
-  } catch (error) {
-    console.error("❌ Error GET /cronograma:", error);
-    res.status(500).json({ success: false, message: error.message });
-  }
+// GET de proyecto estatico
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // POST: { programa, sede, recurso } (compatible con tu front)

@@ -19,7 +19,7 @@ body {
 h1 {
   text-align: center;
   color: #2d3748;
-  margin-bottom: 30px;
+  margin-bottom: 10px;
   font-size: 2.5rem;
   background: linear-gradient(45deg, #667eea, #764ba2);
   -webkit-background-clip: text;
@@ -30,7 +30,7 @@ h1 {
 .filters {
   display: flex;
   gap: 15px;
-  margin-bottom: 30px;
+  margin-bottom: 10px;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
@@ -47,6 +47,10 @@ h1 {
   color: #4a5568;
   margin-bottom: 5px;
   font-size: 0.9rem;
+}
+
+#gruposWrapper {
+  margin-bottom: 10px;
 }
 
 select,
@@ -218,14 +222,6 @@ button:hover {
   font-size: 1.2rem;
 }
 
-/* Contenedor general */
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 15px;
-  font-family: Arial, sans-serif;
-}
-
 /* Contenedor principal */
 .multi-select {
   position: relative;
@@ -324,7 +320,7 @@ button:hover {
   }
 
   h1 {
-    font-size: 2rem;
+    font-size: 1.5rem;
   }
 
   .week-navigation {
@@ -335,14 +331,33 @@ button:hover {
   .multi-select {
     max-width: 100%;
   }
+
   thead {
     display: none;
   }
+
   tr {
     display: flex;
     flex-direction: column;
   }
+
   tbody tr:nth-child(even) {
     background-color: #f8fafc;
+  }
+
+  .filters {
+    gap: 5px;
+  }
+
+  .filter-group {
+    width: 100%;
+  }
+
+  select,
+  button,
+  input {
+    padding: 8px 16px;
+    border-radius: 12px;
+    width: 100%;
   }
 }

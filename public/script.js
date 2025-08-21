@@ -418,7 +418,7 @@ function cargarCronogramaXHR() {
           crearMultiSelectGrupos(res.data);
 
           // Mostrar contenedor de grupos
-          document.getElementById("gruposWrapper").style.display = "block";
+          document.getElementById("gruposWrapper").style.display = "flex";
 
           // Aplicar filtros iniciales
           aplicarFiltros();
