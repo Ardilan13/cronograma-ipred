@@ -1,26 +1,21 @@
 {
   "name": "ipred",
   "version": "1.0.0",
-  "main": "test.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js",
-    "postinstall": "npx puppeteer browsers install chrome"
+    "start": "node server.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Dilan Corredor",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@sparticuz/chromium": "^138.0.2",
     "axios": "^1.11.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "multer": "^2.0.2",
-    "puppeteer": "^24.17.0"
-  },
-  "engines": {
-    "node": ">=20.11.0"
+    "puppeteer": "^19.11.0"
   }
 }
