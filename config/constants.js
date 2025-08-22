@@ -1,5 +1,4 @@
-exports.UIS_URL =
-  "https://ipredtic.uis.edu.co/plataformaticv2/?view=cronogramaPublico";
+exports.UIS_URL = process.env.API_URL;
 
 exports.DEFAULTS = {
   programa: "82",

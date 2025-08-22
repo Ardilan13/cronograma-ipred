@@ -100,7 +100,7 @@ async function getCronograma(req, res) {
     res.status(500).json({
       success: false,
       message: error.message,
-      platform: process.env.VERCEL ? "vercel" : "other",
+      platform: process.env.RENDER ? "vercel" : "other",
     });
   }
 }
