@@ -32,7 +32,7 @@ h1 {
   gap: 15px;
   margin-bottom: 10px;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
 }
 
@@ -93,7 +93,7 @@ button:hover {
   background: rgba(102, 126, 234, 0.1);
   padding: 15px;
   border-radius: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .week-nav-btn {
