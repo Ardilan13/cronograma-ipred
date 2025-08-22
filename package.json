@@ -11,11 +11,13 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@sparticuz/chromium": "^138.0.2",
     "axios": "^1.11.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "multer": "^2.0.2",
-    "puppeteer": "^19.11.0"
+    "puppeteer": "^19.11.0",
+    "puppeteer-core": "^24.17.0"
   }
 }
