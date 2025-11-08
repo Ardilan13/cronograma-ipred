@@ -2,7 +2,7 @@ body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
   padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #df63ef 0%, #8b4073 100%);
   min-height: 100vh;
 }
 
@@ -21,7 +21,7 @@ h1 {
   color: #2d3748;
   margin-bottom: 10px;
   font-size: 2.5rem;
-  background: linear-gradient(45deg, #667eea, #764ba2);
+  background: linear-gradient(45deg, #df63ef, #8b4073);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
@@ -77,7 +77,7 @@ input:focus {
 }
 
 button {
-  background: linear-gradient(45deg, #667eea, #764ba2);
+  background: linear-gradient(45deg, #df63ef, #8b4073);
   color: white;
   border: none;
   cursor: pointer;
@@ -130,7 +130,7 @@ button:hover {
 }
 
 .calendar-table th {
-  background: linear-gradient(45deg, #667eea, #764ba2);
+  background: linear-gradient(45deg, #df63ef, #8b4073);
   color: white;
   padding: 20px 15px;
   text-align: center;
@@ -306,6 +306,13 @@ button:hover {
   accent-color: #007bff;
   width: 18px;
   height: 18px;
+}
+
+.footer-text {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.9rem;
+  color: #38404f;
 }
 
 /* Ocultar el dropdown */
