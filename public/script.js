@@ -611,9 +611,12 @@ function cargarCronogramaXHR() {
   const formData = new FormData(form);
 
   const payload = {
+    semestre: "20261",
     programa: formData.get("programa"),
     sede: formData.get("sede"),
     jornada: formData.get("jornada"),
+    fechaInicial: "2026-02-02",
+    fechaFinal: "2026-08-15",
   };
 
   const xhr = new XMLHttpRequest();
