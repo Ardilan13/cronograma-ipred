@@ -1,7 +1,7 @@
 const BASE_URL =
   window.location.hostname === "localhost"
     ? "http://localhost:3000"
-    : "https://ipredtic.uis.edu.co/plataformaticv2/?ajax=CronogramaPublico&action=buscarCronograma";
+    : "https://cronograma-ipred.vercel.app";
 let semanaActual = 0; // 0 = semana actual, -1 = anterior, 1 = siguiente
 // Asigna un color único a cada grupo
 const coloresGrupos = {};
@@ -624,7 +624,7 @@ function cargarCronogramaXHR() {
   // xhr.setRequestHeader("Content-Type", "application/json");
 
   // no se manda como params, se manda como form-data
-  fetch(`${BASE_URL}`, {
+  fetch(`${BASE_URL}/api/cronograma`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
