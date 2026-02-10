@@ -26,7 +26,8 @@ app.use(express.static(path.join(__dirname, "public")));
 
 /* ---------------------------- Config/constantes ---------------------------- */
 const UIS_URL =
-  "https://ipredtic.uis.edu.co/plataformaticv2/?view=cronogramaPublico";
+  process.env.API_URL ||
+  "https://ipredtic.uis.edu.co/plataformaticv2/?ajax=CronogramaPublico&action=buscarCronograma";
 
 const DEFAULTS = {
   semestre: process.env.SEMESTRE || "20261",
