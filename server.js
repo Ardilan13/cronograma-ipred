@@ -1,4 +1,3 @@
-// server.js optimizado para Vercel
 "use strict";
 
 require("dotenv").config();
@@ -39,20 +38,17 @@ const isNumStr = (v) => typeof v === "string" && /^[0-9]+$/.test(v);
 
 /* --------------------------- Configuración del navegador para Vercel -------------------------- */
 async function getBrowserForVercel() {
-  // Configuración específica para Vercel
   const isVercel = process.env.RENDER;
   const isLocal = !isVercel;
   const puppeteer = isLocal ? require("puppeteer") : require("puppeteer-core");
 
   if (isLocal) {
-    // Local development
     return await puppeteer.launch({
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
   }
 
-  // Para Vercel - configuración optimizada
   return await puppeteer.launch({
     args: [
       ...chromium.args,
@@ -62,7 +58,7 @@ async function getBrowserForVercel() {
       "--disable-gpu",
       "--no-first-run",
       "--no-zygote",
-      "--single-process", // Importante para Vercel
+      "--single-process",
       "--disable-extensions",
       "--disable-background-timer-throttling",
       "--disable-backgrounding-occluded-windows",
@@ -77,7 +73,7 @@ async function getBrowserForVercel() {
 
 /* ------------------------------- Cache simple ------------------------------ */
 const cache = new Map();
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 min
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
 function cacheKey(params) {
   return `${params.semestre}-${params.programa}-${params.sede}-${params.recurso}`;
@@ -102,14 +98,12 @@ async function newOptimizedPage() {
   const browser = await getBrowserForVercel();
   const page = await browser.newPage();
 
-  // Viewport más pequeño para Vercel
   await page.setViewport({ width: 1024, height: 768, deviceScaleFactor: 1 });
 
   await page.setUserAgent(
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
   );
 
-  // Interceptar y bloquear recursos innecesarios
   await page.setRequestInterception(true);
   page.on("request", (req) => {
     const rtype = req.resourceType();
@@ -127,10 +121,10 @@ async function newOptimizedPage() {
   return { browser, page };
 }
 
-/* ------------------------------- Core scrape ------------------------------- */
+/* ------------------------------- Core scrape CON DEBUG ------------------------------- */
 async function fetchCronograma(
   { semestre, programa, sede, recurso },
-  { retries = 1 } = {}, // Menos reintentos en Vercel
+  { retries = 1 } = {},
 ) {
   let attempt = 0;
   let lastErr;
@@ -144,16 +138,16 @@ async function fetchCronograma(
       browser = browserData.browser;
       page = browserData.page;
 
-      // Timeouts más cortos para Vercel
       page.setDefaultNavigationTimeout(15000);
       page.setDefaultTimeout(15000);
 
+      console.log(`[DEBUG] Navegando a ${UIS_URL}...`);
       await page.goto(UIS_URL, {
         waitUntil: "domcontentloaded",
         timeout: 15000,
       });
 
-      // Asegurar existencia de selects
+      console.log(`[DEBUG] Esperando selects...`);
       await page.waitForSelector('[name="semestre"]', {
         visible: true,
         timeout: 10000,
@@ -171,7 +165,12 @@ async function fetchCronograma(
         timeout: 10000,
       });
 
-      // Seleccionar valores
+      console.log(`[DEBUG] Seleccionando valores:`, {
+        semestre,
+        programa,
+        sede,
+        recurso,
+      });
       await page.select('[name="semestre"]', semestre);
       await page.select('[name="Programa"]', programa);
       await page.select('[name="Sede"]', sede);
@@ -181,37 +180,57 @@ async function fetchCronograma(
       if (!btnBuscar)
         throw new Error("No se encontró el botón #search en la página.");
 
-      // Esperar la respuesta
-      const [response] = await Promise.all([
-        page.waitForResponse(
-          (res) =>
-            res.url().includes("buscarCronograma") &&
-            res.request().method() === "POST" &&
-            res.status() === 200,
-          { timeout: 15000 },
-        ),
-        btnBuscar.click(),
-      ]);
+      console.log(`[DEBUG] Haciendo click en el botón buscar...`);
 
-      const raw = await response.text();
-      const data = JSON.parse(raw);
+      // AQUÍ ES EL CAMBIO: capturar la respuesta sin filtro
+      let responseText = null;
+      let responseStatus = null;
 
-      // Cerrar inmediatamente para liberar recursos
+      page.on("response", async (res) => {
+        if (res.url().includes("buscarCronograma")) {
+          responseStatus = res.status();
+          try {
+            responseText = await res.text();
+            console.log(`[DEBUG] Response status: ${responseStatus}`);
+            console.log(
+              `[DEBUG] Response text (primeros 500 chars):`,
+              responseText.substring(0, 500),
+            );
+          } catch (e) {
+            console.log(`[DEBUG] Error al capturar response:`, e.message);
+          }
+        }
+      });
+
+      await btnBuscar.click();
+
+      // Esperar a que se capture la respuesta
+      await page.waitForTimeout(2000);
+
+      if (!responseText) {
+        throw new Error(
+          "No se capturó respuesta del endpoint buscarCronograma",
+        );
+      }
+
+      console.log(`[DEBUG] Intentando parsear como JSON...`);
+      const data = JSON.parse(responseText);
+      console.log(`[DEBUG] ✅ JSON parseado correctamente`);
+
       await page.close().catch(() => {});
       await browser.close().catch(() => {});
 
       return data;
     } catch (err) {
       lastErr = err;
+      console.error(`[DEBUG] Error en intento ${attempt}:`, err.message);
 
-      // Asegurar que se cierren los recursos
       if (page) await page.close().catch(() => {});
       if (browser) await browser.close().catch(() => {});
 
       attempt++;
       if (attempt > retries) break;
 
-      // Backoff más corto
       const delay = 1000 * attempt;
       await new Promise((r) => setTimeout(r, delay));
     }
@@ -225,6 +244,8 @@ app.get("/", (req, res) => {
 });
 
 app.post("/cronograma", async (req, res) => {
+  console.log(`[DEBUG] POST /cronograma recibido:`, req.body);
+
   const body = req.body || {};
   const semestre = isNumStr(body.semestre) ? body.semestre : DEFAULTS.semestre;
   const programa = isNumStr(body.programa) ? body.programa : DEFAULTS.programa;
@@ -235,14 +256,24 @@ app.post("/cronograma", async (req, res) => {
       ? body.recurso
       : DEFAULTS.recurso;
 
+  console.log(`[DEBUG] Parámetros finales:`, {
+    semestre,
+    programa,
+    sede,
+    recurso,
+  });
+
   const params = { semestre, programa, sede, recurso };
   const key = cacheKey(params);
 
   try {
     const cached = getFromCache(key);
-    if (cached)
+    if (cached) {
+      console.log(`[DEBUG] ✅ Datos en caché`);
       return res.json({ success: true, cached: true, params, data: cached });
+    }
 
+    console.log(`[DEBUG] No en caché, haciendo scrape...`);
     const data = await fetchCronograma(params);
     setCache(key, data);
     res.json({ success: true, cached: false, params, data });
@@ -262,7 +293,6 @@ const server = app.listen(PORT, () => {
   console.log(`✅ Servidor corriendo en ${BASE_URL}`);
 });
 
-// No es necesario el graceful shutdown en Vercel serverless
 if (!process.env.VERCEL) {
   process.on("SIGINT", () => {
     console.log("\n⏳ Cerrando servidor...");
