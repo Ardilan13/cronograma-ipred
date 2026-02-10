@@ -33,6 +33,8 @@ const DEFAULTS = {
   programa: "82",
   sede: "10",
   recurso: "2",
+  fechaInicial: process.env.FECHA_INICIAL || "2026-02-02",
+  fechaFinal: process.env.FECHA_FINAL || "2026-08-15",
 };
 
 const isNumStr = (v) => typeof v === "string" && /^[0-9]+$/.test(v);
@@ -244,15 +246,26 @@ app.post("/cronograma", async (req, res) => {
     : isNumStr(body.recurso)
       ? body.recurso
       : DEFAULTS.recurso;
+  const fechaInicial = body.fechaInicial || DEFAULTS.fechaInicial;
+  const fechaFinal = body.fechaFinal || DEFAULTS.fechaFinal;
 
   console.log(`[DEBUG] Parámetros finales:`, {
     semestre,
     programa,
     sede,
     recurso,
+    fechaInicial,
+    fechaFinal,
   });
 
-  const params = { semestre, programa, sede, recurso };
+  const params = {
+    semestre,
+    programa,
+    sede,
+    recurso,
+    fechaInicial,
+    fechaFinal,
+  };
   const key = cacheKey(params);
 
   try {

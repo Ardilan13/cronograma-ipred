@@ -497,7 +497,6 @@ function guardarFiltrosLocalStorage() {
   ).map((input) => input.value);
 
   const data = {
-    semestre: form.semestre.value,
     programa: form.programa.value,
     sede: form.sede.value,
     jornada: form.jornada.value,
@@ -521,7 +520,6 @@ function cargarFiltrosDesdeLocalStorage() {
 
   const form = document.getElementById("filtros");
 
-  if (data.semestre) form.semestre.value = data.semestre;
   if (data.programa) form.programa.value = data.programa;
   if (data.sede) form.sede.value = data.sede;
   if (data.jornada) form.jornada.value = data.jornada;
@@ -613,7 +611,6 @@ function cargarCronogramaXHR() {
   const formData = new FormData(form);
 
   const payload = {
-    semestre: formData.get("semestre"),
     programa: formData.get("programa"),
     sede: formData.get("sede"),
     jornada: formData.get("jornada"),
