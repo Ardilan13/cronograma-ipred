@@ -1,7 +1,7 @@
 const BASE_URL =
   window.location.hostname === "localhost"
     ? "http://localhost:3000"
-    : "https://cronograma-ipred.vercel.app";
+    : "https://ipredtic.uis.edu.co/plataformaticv2/?ajax=CronogramaPublico&action=buscarCronograma";
 let semanaActual = 0; // 0 = semana actual, -1 = anterior, 1 = siguiente
 // Asigna un color único a cada grupo
 const coloresGrupos = {};
@@ -619,9 +619,38 @@ function cargarCronogramaXHR() {
     fechaFinal: "2026-08-15",
   };
 
-  const xhr = new XMLHttpRequest();
-  xhr.open("POST", `${BASE_URL}/cronograma`, true);
-  xhr.setRequestHeader("Content-Type", "application/json");
+  // const xhr = new XMLHttpRequest();
+  // xhr.open("POST", `${BASE_URL}/cronograma`, true);
+  // xhr.setRequestHeader("Content-Type", "application/json");
+
+  fetch(`${BASE_URL}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  })
+    .then((response) => response.json())
+    .then((res) => {
+      if (res.success && res.data) {
+        datosOriginales = res.data;
+        crearMultiSelectGrupos(res.data);
+        crearMultiSelectMaterias(res.data);
+        document.getElementById("gruposWrapper").style.display = "flex";
+        document.getElementById("materiasWrapper").style.display = "flex";
+        aplicarFiltros();
+      } else {
+        const resultado = document.getElementById("resultado");
+        resultado.innerHTML =
+          '<div class="no-data">⚠️ No se encontraron datos para los filtros seleccionados</div>';
+      }
+    })
+    .catch((error) => {
+      console.error("Error al cargar cronograma:", error);
+      const resultado = document.getElementById("resultado");
+      resultado.innerHTML =
+        '<div class="no-data" style="color:red;">❌ Error de red al cargar cronograma</div>';
+    });
 
   const resultado = document.getElementById("resultado");
   resultado.innerHTML = '<div class="loading">🔄 Cargando cronograma...</div>';

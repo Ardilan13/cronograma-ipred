@@ -152,10 +152,6 @@ async function fetchCronograma(
       });
 
       console.log(`[DEBUG] Esperando selects...`);
-      await page.waitForSelector('[name="semestre"]', {
-        visible: true,
-        timeout: 10000,
-      });
       await page.waitForSelector('[name="Programa"]', {
         visible: true,
         timeout: 10000,
@@ -177,7 +173,6 @@ async function fetchCronograma(
         fechaInicial,
         fechaFinal,
       });
-      await page.select('[name="semestre"]', semestre);
       await page.select('[name="Programa"]', programa);
       await page.select('[name="Sede"]', sede);
       await page.select('[name="recurso"]', recurso);
