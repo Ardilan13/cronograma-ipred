@@ -299,7 +299,7 @@ function crearMultiSelectGrupos(datos) {
 
   // Recuperar grupos guardados
   const filtrosGuardados = JSON.parse(
-    localStorage.getItem("filtrosCronograma")
+    localStorage.getItem("filtrosCronograma"),
   );
   const gruposGuardados = filtrosGuardados?.grupos || [];
   const seleccionadosInicialmente = [];
@@ -347,7 +347,7 @@ function crearMultiSelectGrupos(datos) {
 
   contenedor.addEventListener("change", () => {
     const seleccionados = Array.from(
-      contenedor.querySelectorAll("input[type='checkbox']:checked")
+      contenedor.querySelectorAll("input[type='checkbox']:checked"),
     ).map((input) => input.value);
 
     selectedBox.textContent =
@@ -377,8 +377,8 @@ function crearMultiSelectMaterias(datos) {
   // Obtener materias únicas según los grupos seleccionados
   const gruposSeleccionados = Array.from(
     document.querySelectorAll(
-      "#grupos-container input[type='checkbox']:checked"
-    )
+      "#grupos-container input[type='checkbox']:checked",
+    ),
   ).map((input) => input.value);
 
   const datosNormalizados = Array.isArray(datos) ? datos[0] : datos;
@@ -390,7 +390,7 @@ function crearMultiSelectMaterias(datos) {
       cursos.forEach((curso) => {
         // Solo considerar cursos que tengan actividades en los grupos seleccionados
         const tieneGrupoSeleccionado = curso.actividades.some((act) =>
-          gruposSeleccionados.includes(act.grupo)
+          gruposSeleccionados.includes(act.grupo),
         );
         if (tieneGrupoSeleccionado) {
           materiasSet.add(curso.nombre_asignatura);
@@ -403,7 +403,7 @@ function crearMultiSelectMaterias(datos) {
 
   // Recuperar materias guardadas
   const filtrosGuardados = JSON.parse(
-    localStorage.getItem("filtrosCronograma")
+    localStorage.getItem("filtrosCronograma"),
   );
   const materiasGuardadas = filtrosGuardados?.materias || [];
   const seleccionadasInicialmente = [];
@@ -469,7 +469,7 @@ function crearMultiSelectMaterias(datos) {
 
   contenedor.addEventListener("change", () => {
     const seleccionadas = Array.from(
-      contenedor.querySelectorAll("input[type='checkbox']:checked")
+      contenedor.querySelectorAll("input[type='checkbox']:checked"),
     ).map((input) => input.value);
 
     selectedBox.textContent =
@@ -486,17 +486,18 @@ function guardarFiltrosLocalStorage() {
   const form = document.getElementById("filtros");
   const gruposSeleccionados = Array.from(
     document.querySelectorAll(
-      "#grupos-container input[type='checkbox']:checked"
-    )
+      "#grupos-container input[type='checkbox']:checked",
+    ),
   ).map((input) => input.value);
 
   const materiasSeleccionadas = Array.from(
     document.querySelectorAll(
-      "#materias-container input[type='checkbox']:checked"
-    )
+      "#materias-container input[type='checkbox']:checked",
+    ),
   ).map((input) => input.value);
 
   const data = {
+    semestre: form.semestre.value,
     programa: form.programa.value,
     sede: form.sede.value,
     jornada: form.jornada.value,
@@ -520,6 +521,7 @@ function cargarFiltrosDesdeLocalStorage() {
 
   const form = document.getElementById("filtros");
 
+  if (data.semestre) form.semestre.value = data.semestre;
   if (data.programa) form.programa.value = data.programa;
   if (data.sede) form.sede.value = data.sede;
   if (data.jornada) form.jornada.value = data.jornada;
@@ -528,7 +530,7 @@ function cargarFiltrosDesdeLocalStorage() {
   if (data.grupos && data.grupos.length > 0) {
     data.grupos.forEach((g) => {
       const checkbox = document.querySelector(
-        `#grupos-container input[value="${g}"]`
+        `#grupos-container input[value="${g}"]`,
       );
       if (checkbox) checkbox.checked = true;
     });
@@ -540,27 +542,27 @@ function aplicarFiltros() {
 
   const gruposSeleccionados = Array.from(
     document.querySelectorAll(
-      "#grupos-container input[type='checkbox']:checked"
-    )
+      "#grupos-container input[type='checkbox']:checked",
+    ),
   ).map((opt) => opt.value);
 
   const materiasSeleccionadas = Array.from(
     document.querySelectorAll(
-      "#materias-container input[type='checkbox']:checked"
-    )
+      "#materias-container input[type='checkbox']:checked",
+    ),
   ).map((opt) => opt.value);
 
   let datosFiltrados = filtrarPorGrupoYSemana(
     datosOriginales,
     gruposSeleccionados,
-    semanaActual
+    semanaActual,
   );
 
   // Filtrar por materias seleccionadas
   if (materiasSeleccionadas.length > 0) {
     // Normalizar nombres de materias seleccionadas a minúsculas y sin espacios al inicio/final
     const materiasNorm = materiasSeleccionadas.map((m) =>
-      m.trim().toLowerCase()
+      m.trim().toLowerCase(),
     );
 
     datosFiltrados = datosFiltrados.map((programas) => {
@@ -611,6 +613,7 @@ function cargarCronogramaXHR() {
   const formData = new FormData(form);
 
   const payload = {
+    semestre: formData.get("semestre"),
     programa: formData.get("programa"),
     sede: formData.get("sede"),
     jornada: formData.get("jornada"),
@@ -675,7 +678,7 @@ function cargarCronogramaXHR() {
 // Cargar datos al inicio
 window.onload = function () {
   const filtrosGuardados = JSON.parse(
-    localStorage.getItem("filtrosCronograma")
+    localStorage.getItem("filtrosCronograma"),
   );
 
   // Solo cargar automáticamente si hay filtros guardados
