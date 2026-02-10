@@ -146,13 +146,11 @@ async function fetchCronograma(
       page.setDefaultNavigationTimeout(15000);
       page.setDefaultTimeout(15000);
 
-      console.log(`[DEBUG] Navegando a ${UIS_URL}...`);
       await page.goto(UIS_URL, {
         waitUntil: "domcontentloaded",
         timeout: 15000,
       });
 
-      console.log(`[DEBUG] Esperando selects...`);
       await page.waitForSelector('[name="Programa"]', {
         visible: true,
         timeout: 10000,
@@ -182,8 +180,6 @@ async function fetchCronograma(
       if (!btnBuscar)
         throw new Error("No se encontró el botón #search en la página.");
 
-      console.log(`[DEBUG] Haciendo click en el botón buscar...`);
-
       // Usar Promise.all correctamente con waitForResponse
       const [response] = await Promise.all([
         page.waitForResponse(
@@ -196,16 +192,9 @@ async function fetchCronograma(
         btnBuscar.click(),
       ]);
 
-      console.log(`[DEBUG] Respuesta recibida, parseando...`);
       const raw = await response.text();
 
-      console.log(
-        `[DEBUG] Response (primeros 2000 chars):`,
-        raw.substring(0, 2000),
-      );
-
       const data = JSON.parse(raw);
-      console.log(`[DEBUG] ✅ JSON parseado correctamente`);
 
       await page.close().catch(() => {});
       await browser.close().catch(() => {});
@@ -234,8 +223,6 @@ app.get("/", (req, res) => {
 });
 
 app.post("/cronograma", async (req, res) => {
-  console.log(`[DEBUG] POST /cronograma recibido:`, req.body);
-
   const body = req.body || {};
   const semestre = isNumStr(body.semestre) ? body.semestre : DEFAULTS.semestre;
   const programa = isNumStr(body.programa) ? body.programa : DEFAULTS.programa;
@@ -247,15 +234,6 @@ app.post("/cronograma", async (req, res) => {
       : DEFAULTS.recurso;
   const fechaInicial = body.fechaInicial || DEFAULTS.fechaInicial;
   const fechaFinal = body.fechaFinal || DEFAULTS.fechaFinal;
-
-  console.log(`[DEBUG] Parámetros finales:`, {
-    semestre,
-    programa,
-    sede,
-    recurso,
-    fechaInicial,
-    fechaFinal,
-  });
 
   const params = {
     semestre,
@@ -270,11 +248,9 @@ app.post("/cronograma", async (req, res) => {
   try {
     const cached = getFromCache(key);
     if (cached) {
-      console.log(`[DEBUG] ✅ Datos en caché`);
       return res.json({ success: true, cached: true, params, data: cached });
     }
 
-    console.log(`[DEBUG] No en caché, haciendo scrape...`);
     const data = await fetchCronograma(params);
     setCache(key, data);
     res.json({ success: true, cached: false, params, data });

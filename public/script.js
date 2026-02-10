@@ -597,16 +597,36 @@ function aplicarFiltros() {
 
 let gruposSeleccionados = [];
 
-// Manejar envío de formulario
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("filtros");
+
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    cargarCronogramaXHR();
+    cargarCronograma();
   });
+
+  // Auto carga si hay filtros
+  const filtrosGuardados = JSON.parse(
+    localStorage.getItem("filtrosCronograma"),
+  );
+
+  if (filtrosGuardados) {
+    cargarFiltrosDesdeLocalStorage();
+    cargarCronograma();
+  }
 });
 
-function cargarCronogramaXHR() {
+async function cargarCronograma() {
+  const resultado = document.getElementById("resultado");
+
+  // ✅ loading ANTES del fetch
+  resultado.innerHTML = '<div class="loading">🔄 Cargando cronograma...</div>';
+  document.getElementById("weekNavigation").style.display = "none";
+  document.getElementById("gruposWrapper").style.display = "none";
+  document.getElementById("materiasWrapper").style.display = "none";
+
+  semanaActual = 0;
+
   const form = document.getElementById("filtros");
   const formData = new FormData(form);
 
@@ -619,104 +639,52 @@ function cargarCronogramaXHR() {
     fechaFinal: "2026-08-15",
   };
 
-  // const xhr = new XMLHttpRequest();
-  // xhr.open("POST", `${BASE_URL}/cronograma`, true);
-  // xhr.setRequestHeader("Content-Type", "application/json");
+  try {
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), 10000); // evita cuelgues
 
-  // no se manda como params, se manda como form-data
-  fetch(`${BASE_URL}/api/cronograma`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams(payload).toString(),
-  })
-    .then((response) => response.json())
-    .then((res) => {
-      if (res.success && res.data) {
-        datosOriginales = res.data;
-        crearMultiSelectGrupos(res.data);
-        crearMultiSelectMaterias(res.data);
-        document.getElementById("gruposWrapper").style.display = "flex";
-        document.getElementById("materiasWrapper").style.display = "flex";
-        aplicarFiltros();
-      } else {
-        const resultado = document.getElementById("resultado");
-        resultado.innerHTML =
-          '<div class="no-data">⚠️ No se encontraron datos para los filtros seleccionados</div>';
-      }
-    })
-    .catch((error) => {
-      console.error("Error al cargar cronograma:", error);
-      const resultado = document.getElementById("resultado");
-      resultado.innerHTML =
-        '<div class="no-data" style="color:red;">❌ Error de red al cargar cronograma</div>';
+    const response = await fetch(`${BASE_URL}/api/cronograma`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams(payload).toString(),
+      signal: controller.signal,
     });
 
-  const resultado = document.getElementById("resultado");
-  resultado.innerHTML = '<div class="loading">🔄 Cargando cronograma...</div>';
-  document.getElementById("weekNavigation").style.display = "none";
-  document.getElementById("gruposWrapper").style.display = "none";
-  document.getElementById("materiasWrapper").style.display = "none";
-
-  semanaActual = 0;
-
-  xhr.onload = function () {
-    if (xhr.status === 200) {
-      try {
-        const res = JSON.parse(xhr.responseText);
-
-        if (res.data && res.data.length > 0) {
-          datosOriginales = res.data;
-
-          // Crear multi-select de grupos
-          crearMultiSelectGrupos(res.data);
-
-          // Crear multi-select de materias
-          crearMultiSelectMaterias(res.data);
-
-          // Mostrar contenedor de grupos
-          document.getElementById("gruposWrapper").style.display = "flex";
-
-          // Mostrar contenedor de materias
-          document.getElementById("materiasWrapper").style.display = "flex";
-
-          // Aplicar filtros iniciales
-          aplicarFiltros();
-        } else {
-          resultado.innerHTML =
-            '<div class="no-data">⚠️ No se encontraron datos para los filtros seleccionados</div>';
-        }
-      } catch (e) {
-        console.error("Error al parsear JSON:", e);
-        resultado.innerHTML =
-          '<div class="no-data">❌ Error al procesar los datos</div>';
-      }
-    } else {
-      resultado.innerHTML = `<div class="no-data" style="color:red;">❌ Error: ${xhr.status}</div>`;
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
     }
-  };
 
-  xhr.onerror = function () {
-    resultado.innerHTML =
-      '<div class="no-data" style="color:red;">❌ Error de red al cargar cronograma</div>';
-  };
+    const res = await response.json();
 
-  xhr.send(JSON.stringify(payload));
-}
+    console.log("Respuesta cronograma:", res); // 👈 déjalo mientras pruebas
 
-// Cargar datos al inicio
-window.onload = function () {
-  const filtrosGuardados = JSON.parse(
-    localStorage.getItem("filtrosCronograma"),
-  );
+    // ⚠️ algunas APIs no traen success
+    const data = res.data || res;
 
-  // Solo cargar automáticamente si hay filtros guardados
-  if (filtrosGuardados) {
-    // Primero cargamos filtros guardados
-    cargarFiltrosDesdeLocalStorage();
+    if (data && data.length > 0) {
+      datosOriginales = data;
 
-    // Luego hacemos busqueda en el cronograma
-    cargarCronogramaXHR();
+      crearMultiSelectGrupos(data);
+      crearMultiSelectMaterias(data);
+
+      document.getElementById("gruposWrapper").style.display = "flex";
+      document.getElementById("materiasWrapper").style.display = "flex";
+
+      aplicarFiltros();
+    } else {
+      resultado.innerHTML =
+        '<div class="no-data">⚠️ No se encontraron datos para los filtros seleccionados</div>';
+    }
+  } catch (error) {
+    console.error("Error al cargar cronograma:", error);
+
+    const mensaje =
+      error.name === "AbortError"
+        ? "⏰ El servidor tardó demasiado en responder"
+        : "❌ Error al cargar cronograma";
+
+    resultado.innerHTML = `<div class="no-data" style="color:red;">${mensaje}</div>`;
   }
-};
+}
