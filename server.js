@@ -17,7 +17,7 @@ app.use(
     origin: "*",
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  })
+  }),
 );
 
 app.use(express.urlencoded({ extended: true }));
@@ -29,6 +29,7 @@ const UIS_URL =
   "https://ipredtic.uis.edu.co/plataformaticv2/?view=cronogramaPublico";
 
 const DEFAULTS = {
+  semestre: process.env.SEMESTRE || "20261",
   programa: "82",
   sede: "10",
   recurso: "2",
@@ -79,7 +80,7 @@ const cache = new Map();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 min
 
 function cacheKey(params) {
-  return `${params.programa}-${params.sede}-${params.recurso}`;
+  return `${params.semestre}-${params.programa}-${params.sede}-${params.recurso}`;
 }
 
 function getFromCache(key) {
@@ -105,7 +106,7 @@ async function newOptimizedPage() {
   await page.setViewport({ width: 1024, height: 768, deviceScaleFactor: 1 });
 
   await page.setUserAgent(
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
   );
 
   // Interceptar y bloquear recursos innecesarios
@@ -128,8 +129,8 @@ async function newOptimizedPage() {
 
 /* ------------------------------- Core scrape ------------------------------- */
 async function fetchCronograma(
-  { programa, sede, recurso },
-  { retries = 1 } = {} // Menos reintentos en Vercel
+  { semestre, programa, sede, recurso },
+  { retries = 1 } = {}, // Menos reintentos en Vercel
 ) {
   let attempt = 0;
   let lastErr;
@@ -153,6 +154,10 @@ async function fetchCronograma(
       });
 
       // Asegurar existencia de selects
+      await page.waitForSelector('[name="semestre"]', {
+        visible: true,
+        timeout: 10000,
+      });
       await page.waitForSelector('[name="Programa"]', {
         visible: true,
         timeout: 10000,
@@ -167,6 +172,7 @@ async function fetchCronograma(
       });
 
       // Seleccionar valores
+      await page.select('[name="semestre"]', semestre);
       await page.select('[name="Programa"]', programa);
       await page.select('[name="Sede"]', sede);
       await page.select('[name="recurso"]', recurso);
@@ -182,7 +188,7 @@ async function fetchCronograma(
             res.url().includes("buscarCronograma") &&
             res.request().method() === "POST" &&
             res.status() === 200,
-          { timeout: 15000 }
+          { timeout: 15000 },
         ),
         btnBuscar.click(),
       ]);
@@ -220,15 +226,16 @@ app.get("/", (req, res) => {
 
 app.post("/cronograma", async (req, res) => {
   const body = req.body || {};
+  const semestre = isNumStr(body.semestre) ? body.semestre : DEFAULTS.semestre;
   const programa = isNumStr(body.programa) ? body.programa : DEFAULTS.programa;
   const sede = isNumStr(body.sede) ? body.sede : DEFAULTS.sede;
   const recurso = isNumStr(body.jornada)
     ? body.jornada
     : isNumStr(body.recurso)
-    ? body.recurso
-    : DEFAULTS.recurso;
+      ? body.recurso
+      : DEFAULTS.recurso;
 
-  const params = { programa, sede, recurso };
+  const params = { semestre, programa, sede, recurso };
   const key = cacheKey(params);
 
   try {
