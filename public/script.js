@@ -623,12 +623,13 @@ function cargarCronogramaXHR() {
   // xhr.open("POST", `${BASE_URL}/cronograma`, true);
   // xhr.setRequestHeader("Content-Type", "application/json");
 
+  // no se manda como params, se manda como form-data
   fetch(`${BASE_URL}`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: JSON.stringify(payload),
+    body: new URLSearchParams(payload).toString(),
   })
     .then((response) => response.json())
     .then((res) => {
