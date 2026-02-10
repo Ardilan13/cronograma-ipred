@@ -173,6 +173,8 @@ async function fetchCronograma(
         programa,
         sede,
         recurso,
+        fechaInicial,
+        fechaFinal,
       });
       await page.select('[name="semestre"]', semestre);
       await page.select('[name="Programa"]', programa);
@@ -201,8 +203,8 @@ async function fetchCronograma(
       const raw = await response.text();
 
       console.log(
-        `[DEBUG] Response (primeros 300 chars):`,
-        raw.substring(0, 300),
+        `[DEBUG] Response (primeros 2000 chars):`,
+        raw.substring(0, 2000),
       );
 
       const data = JSON.parse(raw);
