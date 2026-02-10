@@ -1,3 +1,4 @@
+// server.js optimizado para Vercel - CORREGIDO
 "use strict";
 
 require("dotenv").config();
@@ -121,7 +122,7 @@ async function newOptimizedPage() {
   return { browser, page };
 }
 
-/* ------------------------------- Core scrape CON DEBUG ------------------------------- */
+/* ------------------------------- Core scrape ------------------------------- */
 async function fetchCronograma(
   { semestre, programa, sede, recurso },
   { retries = 1 } = {},
@@ -182,39 +183,27 @@ async function fetchCronograma(
 
       console.log(`[DEBUG] Haciendo click en el botón buscar...`);
 
-      // AQUÍ ES EL CAMBIO: capturar la respuesta sin filtro
-      let responseText = null;
-      let responseStatus = null;
+      // Usar Promise.all correctamente con waitForResponse
+      const [response] = await Promise.all([
+        page.waitForResponse(
+          (res) =>
+            res.url().includes("buscarCronograma") &&
+            res.request().method() === "POST" &&
+            res.status() === 200,
+          { timeout: 15000 },
+        ),
+        btnBuscar.click(),
+      ]);
 
-      page.on("response", async (res) => {
-        if (res.url().includes("buscarCronograma")) {
-          responseStatus = res.status();
-          try {
-            responseText = await res.text();
-            console.log(`[DEBUG] Response status: ${responseStatus}`);
-            console.log(
-              `[DEBUG] Response text (primeros 500 chars):`,
-              responseText.substring(0, 500),
-            );
-          } catch (e) {
-            console.log(`[DEBUG] Error al capturar response:`, e.message);
-          }
-        }
-      });
+      console.log(`[DEBUG] Respuesta recibida, parseando...`);
+      const raw = await response.text();
 
-      await btnBuscar.click();
+      console.log(
+        `[DEBUG] Response (primeros 300 chars):`,
+        raw.substring(0, 300),
+      );
 
-      // Esperar a que se capture la respuesta
-      await page.waitForTimeout(2000);
-
-      if (!responseText) {
-        throw new Error(
-          "No se capturó respuesta del endpoint buscarCronograma",
-        );
-      }
-
-      console.log(`[DEBUG] Intentando parsear como JSON...`);
-      const data = JSON.parse(responseText);
+      const data = JSON.parse(raw);
       console.log(`[DEBUG] ✅ JSON parseado correctamente`);
 
       await page.close().catch(() => {});
